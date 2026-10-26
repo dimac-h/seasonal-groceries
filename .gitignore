@@ -9,6 +9,9 @@ __pycache__/
 dev/config/
 dev/mealie-data/
 
+dev/.state/
+e2e/screenshots/
+
 # IDE / OS
 .idea/
 .vscode/

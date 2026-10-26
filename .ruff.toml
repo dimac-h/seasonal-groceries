@@ -44,3 +44,14 @@ max-complexity = 25
     "ARG002", # flow step signatures are fixed by Home Assistant
     "ARG004", # async_get_options_flow(config_entry) has a fixed signature
 ]
+
+"dev/*.py" = [
+    "INP001", # standalone scripts, not a package
+    "S310", # local dev URLs only
+    "T201", # scripts print their result
+    "D103", # script helpers
+    "ANN001", "ANN201", "ANN202",
+]
+"e2e/*.py" = [
+    "S101", "ARG001", "D103", "INP001", "PLR2004",
+]

@@ -12,6 +12,9 @@ dev = [
     "pytest-homeassistant-custom-component>=0.13.316",
     "ruff>=0.14.1",
 ]
+e2e = [
+    "playwright>=1.50",
+]
 
 [tool.setuptools]
 packages = []
