@@ -39,3 +39,8 @@ max-complexity = 25
 "custom_components/*/__init__.py" = [
     "ARG001", # Home Assistant calls async_setup/async_setup_entry/async_unload_entry with fixed signatures
 ]
+
+"custom_components/*/config_flow.py" = [
+    "ARG002", # flow step signatures are fixed by Home Assistant
+    "ARG004", # async_get_options_flow(config_entry) has a fixed signature
+]
