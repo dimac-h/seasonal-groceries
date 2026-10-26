@@ -4,6 +4,10 @@ from enum import StrEnum
 
 DOMAIN = "seasonal_groceries"
 
+# Built frontend (Vite output in www/), served as a static path.
+FRONTEND_PATH = f"/{DOMAIN}_frontend"
+CARD_MODULE_URL = f"{FRONTEND_PATH}/seasonal-groceries-cards.js"
+
 
 class Language(StrEnum):
     """

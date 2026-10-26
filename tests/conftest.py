@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from homeassistant.config_entries import ConfigEntryState
@@ -12,7 +13,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry, mock_c
 from custom_components.seasonal_groceries.const import DOMAIN
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterator
+    from collections.abc import AsyncIterator, Iterator
 
     from homeassistant.core import HomeAssistant
 
@@ -29,6 +30,33 @@ def auto_enable_custom_integrations(enable_custom_integrations: None) -> None:
 def mock_frontend_component(hass: HomeAssistant) -> None:
     """Mock the frontend component that manifest.json depends on."""
     mock_component(hass, "frontend")
+
+
+@pytest.fixture(autouse=True)
+async def http_component(hass: HomeAssistant) -> AsyncIterator[None]:
+    """
+    Set up http without really serving files.
+
+    The test WebSocket client starts the server, and a started server refuses new
+    static paths, so registering them is stubbed (test_init covers the call).
+    """
+    await async_setup_component(hass, "http", {})
+    with patch.object(hass.http, "async_register_static_paths", AsyncMock()):
+        yield
+
+
+@pytest.fixture(autouse=True)
+def add_extra_js_url_mock() -> Iterator[MagicMock]:
+    """Stub the frontend's extra-module registry."""
+    with patch("custom_components.seasonal_groceries.add_extra_js_url") as mock:
+        yield mock
+
+
+@pytest.fixture(autouse=True)
+def remove_extra_js_url_mock() -> Iterator[MagicMock]:
+    """Stub the frontend's extra-module registry cleanup used on unload."""
+    with patch("custom_components.seasonal_groceries.remove_extra_js_url") as mock:
+        yield mock
 
 
 @pytest.fixture(autouse=True)

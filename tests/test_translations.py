@@ -28,3 +28,14 @@ def test_ha_translation_files_match_strings() -> None:
     for language in Language:
         translated = _load(INTEGRATION / "translations" / f"{language.value}.json")
         assert _flatten(translated) == expected, language
+
+
+def test_card_translations_have_identical_keys() -> None:
+    folder = INTEGRATION / "frontend" / "src" / "translations"
+    documents = {path.stem: _load(path) for path in sorted(folder.glob("*.json"))}
+
+    assert {language.value for language in Language} <= set(documents)
+    expected = _flatten(documents["en"])
+    for code, document in documents.items():
+        assert _flatten(document) == expected, code
+        assert all(str(value).strip() for value in document.values()), code
