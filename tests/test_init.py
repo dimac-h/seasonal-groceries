@@ -1,12 +1,19 @@
 """Tests for setup and unload of the integration."""
+
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from homeassistant.config_entries import ConfigEntryState
-from homeassistant.core import HomeAssistant
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 
-async def test_entry_loads_and_unloads(hass: HomeAssistant, setup_integration: MockConfigEntry) -> None:
+async def test_entry_loads_and_unloads(
+    hass: HomeAssistant, setup_integration: MockConfigEntry
+) -> None:
     assert setup_integration.state is ConfigEntryState.LOADED
 
     assert await hass.config_entries.async_unload(setup_integration.entry_id)

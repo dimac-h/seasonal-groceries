@@ -6,7 +6,7 @@ Seasonal Groceries: a Home Assistant custom integration (`custom_components/seas
 
 ## Development
 
-Backend tests: `uv sync --group dev && uv run pytest`.
+Backend tests: `uv sync --group dev && uv run pytest`. Lint and format: `uv run ruff check . && uv run ruff format --check .` (config in `.ruff.toml`, same as home-upkeep; CI runs it).
 
 Frontend (`custom_components/seasonal_groceries/frontend/`): `npm ci && npm run build` writes into `../www/` (git-ignored).
 

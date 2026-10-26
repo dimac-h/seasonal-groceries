@@ -1,11 +1,14 @@
 """Season sorting and pesticide bands (pure functions)."""
+
 from __future__ import annotations
 
-from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
-from .dataset import Cutoffs, Dataset, Item, ProduceType
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    from .dataset import Cutoffs, Dataset, Item, ProduceType
 
 Band = Literal["green", "orange", "red", "unknown"]
 
@@ -39,9 +42,13 @@ def rows(
     only_in_season: bool = False,
     max_rows: int | None = None,
 ) -> list[Row]:
-    """Items of one type, sorted: in season first, fewest residues first, unknown last."""
+    """Items of one type: in season first, fewest residues first, unknown last."""
     result = [
-        Row(item=item, band=band_for(item, dataset.cutoffs), in_season=month in item.months)
+        Row(
+            item=item,
+            band=band_for(item, dataset.cutoffs),
+            in_season=month in item.months,
+        )
         for item in dataset.items
         if item.type == produce_type
     ]

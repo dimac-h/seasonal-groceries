@@ -1,12 +1,21 @@
 """Tests for the bundled seasonal dataset and its loader."""
+
 from __future__ import annotations
 
 import json
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
-from custom_components.seasonal_groceries.dataset import BUNDLED_PATH, load_dataset
+from custom_components.seasonal_groceries.dataset import (
+    BUNDLED_PATH,
+    Dataset,
+    Item,
+    load_dataset,
+)
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def _raw() -> dict:
@@ -19,7 +28,7 @@ def _write(tmp_path: Path, raw: dict) -> Path:
     return path
 
 
-def _item(dataset, key: str):
+def _item(dataset: Dataset, key: str) -> Item:
     return next(i for i in dataset.items if i.key == key)
 
 
@@ -57,17 +66,23 @@ def test_item_name_falls_back_to_english() -> None:
 
 
 def test_credits_name_voedingscentrum_and_pan() -> None:
-    credits = load_dataset().credits
-    assert {"Voedingscentrum", "Velt", "Bionext"} <= set(credits["calendar"].organisations)
-    pesticides = credits["pesticides"]
+    credit_map = load_dataset().credits
+    assert {"Voedingscentrum", "Velt", "Bionext"} <= set(
+        credit_map["calendar"].organisations
+    )
+    pesticides = credit_map["pesticides"]
     assert any("PAN Netherlands" in o for o in pesticides.organisations)
     assert "NVWA" in " ".join(pesticides.organisations)
-    assert "2021" in pesticides.note and "2023" in pesticides.note
+    assert "2021" in pesticides.note
+    assert "2023" in pesticides.note
 
 
 def test_cutoffs_per_type() -> None:
     cutoffs = load_dataset().cutoffs
-    assert (cutoffs["vegetable"].green_max, cutoffs["vegetable"].orange_max) == (0.4, 1.8)
+    assert (cutoffs["vegetable"].green_max, cutoffs["vegetable"].orange_max) == (
+        0.4,
+        1.8,
+    )
     assert not cutoffs["vegetable"].provisional
     assert (cutoffs["fruit"].green_max, cutoffs["fruit"].orange_max) == (1.8, 3.0)
     assert cutoffs["fruit"].provisional
@@ -76,10 +91,20 @@ def test_cutoffs_per_type() -> None:
 @pytest.mark.parametrize(
     ("key", "residues"),
     [
-        ("rode-biet", 0.1), ("spruiten", 1.9), ("appel", 3.4), ("peer", 3.3),
-        ("asperge", 0.0), ("pompoen", 0.4), ("wortel", 1.6), ("prei", 1.8),
-        ("kropsla", 3.6), ("aardbei", 3.9), ("blauwe-bes", 2.0), ("pruim", 1.8),
-        ("rodekool", 0.3), ("tomaat", 1.1),
+        ("rode-biet", 0.1),
+        ("spruiten", 1.9),
+        ("appel", 3.4),
+        ("peer", 3.3),
+        ("asperge", 0.0),
+        ("pompoen", 0.4),
+        ("wortel", 1.6),
+        ("prei", 1.8),
+        ("kropsla", 3.6),
+        ("aardbei", 3.9),
+        ("blauwe-bes", 2.0),
+        ("pruim", 1.8),
+        ("rodekool", 0.3),
+        ("tomaat", 1.1),
     ],
 )
 def test_pan_residues(key: str, residues: float) -> None:

@@ -1,4 +1,5 @@
 """Tests for season sorting and pesticide bands."""
+
 from __future__ import annotations
 
 import pytest
@@ -7,7 +8,9 @@ from custom_components.seasonal_groceries.dataset import Dataset, Item, load_dat
 from custom_components.seasonal_groceries.season import band_for, rows
 
 
-def _item(key: str, residues: float | None, months: set[int], produce_type: str = "vegetable") -> Item:
+def _item(
+    key: str, residues: float | None, months: set[int], produce_type: str = "vegetable"
+) -> Item:
     return Item(
         key=key,
         names={"nl": key, "en": key},
@@ -20,7 +23,12 @@ def _item(key: str, residues: float | None, months: set[int], produce_type: str 
 
 def _dataset(*items: Item) -> Dataset:
     real = load_dataset()
-    return Dataset(items=tuple(items), cutoffs=real.cutoffs, credits=real.credits, data_as_of=real.data_as_of)
+    return Dataset(
+        items=tuple(items),
+        cutoffs=real.cutoffs,
+        credits=real.credits,
+        data_as_of=real.data_as_of,
+    )
 
 
 CUTOFFS = load_dataset().cutoffs
@@ -28,7 +36,14 @@ CUTOFFS = load_dataset().cutoffs
 
 @pytest.mark.parametrize(
     ("residues", "band"),
-    [(0.0, "green"), (0.4, "green"), (0.5, "orange"), (1.8, "orange"), (1.9, "red"), (3.6, "red")],
+    [
+        (0.0, "green"),
+        (0.4, "green"),
+        (0.5, "orange"),
+        (1.8, "orange"),
+        (1.9, "red"),
+        (3.6, "red"),
+    ],
 )
 def test_band_vegetable_boundaries(residues: float, band: str) -> None:
     assert band_for(_item("x", residues, {1}), CUTOFFS) == band
@@ -55,7 +70,13 @@ def test_rows_sort_order() -> None:
         _item("green-out", 0.0, {3}),
     )
     result = rows(dataset, "vegetable", 10)
-    assert [r.item.key for r in result] == ["green-in", "orange-in", "red-in", "unknown-in", "green-out"]
+    assert [r.item.key for r in result] == [
+        "green-in",
+        "orange-in",
+        "red-in",
+        "unknown-in",
+        "green-out",
+    ]
     assert [r.in_season for r in result] == [True, True, True, True, False]
     assert [r.band for r in result] == ["green", "orange", "red", "unknown", "green"]
 
@@ -78,19 +99,29 @@ def test_rows_year_boundary() -> None:
 
 
 def test_rows_max_rows_cuts_after_sorting() -> None:
-    dataset = _dataset(_item("late", 2.0, {10}), _item("early", 0.1, {10}), _item("mid", 1.0, {10}))
-    assert [r.item.key for r in rows(dataset, "vegetable", 10, max_rows=2)] == ["early", "mid"]
+    dataset = _dataset(
+        _item("late", 2.0, {10}), _item("early", 0.1, {10}), _item("mid", 1.0, {10})
+    )
+    assert [r.item.key for r in rows(dataset, "vegetable", 10, max_rows=2)] == [
+        "early",
+        "mid",
+    ]
 
 
 def test_only_in_season_excludes_others() -> None:
     dataset = _dataset(_item("in", 1.0, {10}), _item("out", 0.0, {3}))
-    assert [r.item.key for r in rows(dataset, "vegetable", 10, only_in_season=True)] == ["in"]
+    assert [
+        r.item.key for r in rows(dataset, "vegetable", 10, only_in_season=True)
+    ] == ["in"]
 
 
 def test_real_dataset_october_vegetables_start_with_green_in_season() -> None:
     result = rows(load_dataset(), "vegetable", 10, only_in_season=True)
-    assert result and result[0].band == "green"
+    assert result
+    assert result[0].band == "green"
     known = [r.item.residues for r in result if r.item.residues is not None]
     assert known == sorted(known)
     unknown_positions = [i for i, r in enumerate(result) if r.band == "unknown"]
-    assert unknown_positions == list(range(len(result) - len(unknown_positions), len(result)))
+    assert unknown_positions == list(
+        range(len(result) - len(unknown_positions), len(result))
+    )

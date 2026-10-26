@@ -1,4 +1,5 @@
 """Fixtures for testing the Seasonal Groceries integration."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -23,7 +24,7 @@ def auto_enable_custom_integrations(enable_custom_integrations: None) -> None:
 
 @pytest.fixture(autouse=True)
 def mock_frontend_component(hass: HomeAssistant) -> None:
-    """Declared as a dependency in manifest.json; the real component needs hass_frontend."""
+    """Mock the frontend component that manifest.json depends on."""
     mock_component(hass, "frontend")
 
 
@@ -31,7 +32,9 @@ def mock_frontend_component(hass: HomeAssistant) -> None:
 async def setup_integration(hass: HomeAssistant) -> MockConfigEntry:
     """Set up the seasonal_groceries integration."""
     await async_setup_component(hass, "http", {})
-    entry = MockConfigEntry(domain=DOMAIN, data={"language": "en", "mealie": {"mode": "none"}})
+    entry = MockConfigEntry(
+        domain=DOMAIN, data={"language": "en", "mealie": {"mode": "none"}}
+    )
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
