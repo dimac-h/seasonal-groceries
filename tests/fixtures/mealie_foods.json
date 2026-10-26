@@ -1,0 +1,107 @@
+{
+ "page": 1,
+ "per_page": 100,
+ "total": 6,
+ "total_pages": 1,
+ "items": [
+  {
+   "id": "aebdbc29-7f5a-430e-94fe-8d2fbaed6489",
+   "name": "kerstomaat",
+   "pluralName": null,
+   "description": "",
+   "extras": {},
+   "labelId": null,
+   "aliases": [],
+   "substitutions": [],
+   "householdsWithIngredientFood": [],
+   "label": null,
+   "recipeCount": 0,
+   "createdAt": "2026-10-26T10:40:43.169710Z",
+   "updatedAt": "2026-10-26T10:40:43.169710Z"
+  },
+  {
+   "id": "60f6bbc1-31bf-4d99-a0ea-cb86f5e57910",
+   "name": "olijfolie",
+   "pluralName": null,
+   "description": "",
+   "extras": {},
+   "labelId": null,
+   "aliases": [],
+   "substitutions": [],
+   "householdsWithIngredientFood": [],
+   "label": null,
+   "recipeCount": 2,
+   "createdAt": "2026-10-26T10:40:43.162856Z",
+   "updatedAt": "2026-10-26T10:40:43.162856Z"
+  },
+  {
+   "id": "aba67dd7-dda5-4216-a259-455ac3cb3791",
+   "name": "banaan",
+   "pluralName": null,
+   "description": "",
+   "extras": {},
+   "labelId": null,
+   "aliases": [],
+   "substitutions": [],
+   "householdsWithIngredientFood": [],
+   "label": null,
+   "recipeCount": 1,
+   "createdAt": "2026-10-26T10:40:43.155409Z",
+   "updatedAt": "2026-10-26T10:40:43.155409Z"
+  },
+  {
+   "id": "a6a56021-9155-4bab-8d06-51b3448e03ab",
+   "name": "prei",
+   "pluralName": null,
+   "description": "",
+   "extras": {},
+   "labelId": null,
+   "aliases": [],
+   "substitutions": [],
+   "householdsWithIngredientFood": [],
+   "label": null,
+   "recipeCount": 1,
+   "createdAt": "2026-10-26T10:40:43.147869Z",
+   "updatedAt": "2026-10-26T10:40:43.147869Z"
+  },
+  {
+   "id": "53bae4a9-d446-4ac4-845e-87188c58f83f",
+   "name": "pompoen",
+   "pluralName": null,
+   "description": "",
+   "extras": {},
+   "labelId": null,
+   "aliases": [],
+   "substitutions": [],
+   "householdsWithIngredientFood": [],
+   "label": null,
+   "recipeCount": 1,
+   "createdAt": "2026-10-26T10:40:43.139398Z",
+   "updatedAt": "2026-10-26T10:40:43.139399Z"
+  },
+  {
+   "id": "2aa4b09e-1093-451a-b3e0-fee98f0533d3",
+   "name": "tomaat",
+   "pluralName": null,
+   "description": "",
+   "extras": {},
+   "labelId": null,
+   "aliases": [
+    {
+     "name": "tomaten"
+    },
+    {
+     "name": "pomodori"
+    }
+   ],
+   "substitutions": [],
+   "householdsWithIngredientFood": [],
+   "label": null,
+   "recipeCount": 1,
+   "createdAt": "2026-10-26T10:40:43.125859Z",
+   "updatedAt": "2026-10-26T10:40:43.125860Z"
+  }
+ ],
+ "next": null,
+ "previous": null
+}

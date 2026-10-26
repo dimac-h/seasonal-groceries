@@ -1,0 +1,14 @@
+{
+  "domain": "seasonal_groceries",
+  "name": "Seasonal Groceries",
+  "codeowners": ["@dimac-h"],
+  "config_flow": true,
+  "dependencies": ["frontend", "http"],
+  "documentation": "https://github.com/dimac-h/seasonal-groceries",
+  "integration_type": "service",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/dimac-h/seasonal-groceries/issues",
+  "quality_scale": "bronze",
+  "requirements": [],
+  "version": "0.1.0"
+}

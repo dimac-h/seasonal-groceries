@@ -1,6 +1,34 @@
-.superpowers/
-.idea/
+# Python
 __pycache__/
+*.py[cod]
 .venv/
+.pytest_cache/
+*.egg-info/
+
+# Home Assistant dev instance
+dev/config/
+dev/mealie-data/
+
+dev/.state/
+e2e/screenshots/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Node
 node_modules/
+
+# Frontend build output (produced by `npm run build`, shipped in release zips)
+custom_components/seasonal_groceries/www/*
+!custom_components/seasonal_groceries/www/.gitkeep
+
+# Local planning docs (specs/plans/mockups) and agent workspace - not part of repo content
 docs/
+.superpowers/
+
+# Local assistant configuration
+.claude/
+.coverage
+htmlcov/

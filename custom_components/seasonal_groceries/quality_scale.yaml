@@ -1,0 +1,49 @@
+# Custom integrations have no official tier; this tracks the Bronze rules as a guide.
+rules:
+  # Bronze
+  action-setup:
+    status: exempt
+    comment: The integration registers no actions. Its WebSocket commands serve the cards only.
+  appropriate-polling:
+    status: done
+    comment: Mealie is polled every 30 minutes; the seasonal data is a bundled file and the month change is scheduled, not polled.
+  brands: done
+  common-modules:
+    status: done
+    comment: The coordinator lives in coordinator.py. There is no base entity because the integration provides no entities.
+  config-flow: done
+  config-flow-test-coverage: done
+  dependency-transparency:
+    status: exempt
+    comment: The integration has no Python requirements.
+  docs-actions:
+    status: exempt
+    comment: The integration provides no actions.
+  docs-conditions:
+    status: exempt
+    comment: The integration provides no conditions.
+  docs-high-level-description: done
+  docs-installation-instructions: done
+  docs-removal-instructions: done
+  docs-triggers:
+    status: exempt
+    comment: The integration provides no triggers.
+  entity-event-setup:
+    status: exempt
+    comment: The integration provides no entities.
+  entity-unique-id:
+    status: exempt
+    comment: The integration provides no entities.
+  has-entity-name:
+    status: exempt
+    comment: The integration provides no entities.
+  runtime-data: done
+  test-before-configure:
+    status: done
+    comment: The manual Mealie step validates the URL and token before creating the entry. Reusing Home Assistant's Mealie entry or skipping Mealie has no connection to test.
+  test-before-setup:
+    status: exempt
+    comment: Deliberate deviation. A Mealie outage at startup must not stop the seasonal information, so setup does not fail when Mealie is unreachable; the cards show a warning instead.
+  unique-config-entry:
+    status: done
+    comment: Only one entry is allowed (single_instance_allowed).
