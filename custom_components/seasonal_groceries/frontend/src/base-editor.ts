@@ -29,6 +29,7 @@ export abstract class SeasonalEditor<C extends { type: string }> extends LitElem
     const labels = this.labels(t);
     return html`
       <ha-form
+        @keydown=${(event: KeyboardEvent) => event.stopPropagation()}
         .hass=${this.hass}
         .data=${this._config}
         .schema=${this.schema(t)}

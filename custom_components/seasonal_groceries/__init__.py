@@ -77,3 +77,10 @@ async def async_unload_entry(
 ) -> bool:
     """Unload a config entry."""
     return True
+
+
+async def async_remove_entry(
+    hass: HomeAssistant, entry: SeasonalGroceriesConfigEntry
+) -> None:
+    """Delete the stored corrections together with the entry."""
+    await CorrectionsStore(hass).async_remove()

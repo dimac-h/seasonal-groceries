@@ -10,12 +10,12 @@ export class CreditsFooter extends LitElement {
   static styles = css`
     :host {
       display: block;
-      margin-block-start: var(--ha-space-3, 12px);
-      padding-block-start: var(--ha-space-2, 8px);
+      margin-block-start: var(--ha-space-6, 24px);
+      padding-block-start: var(--ha-space-3, 12px);
       border-block-start: 1px solid var(--divider-color);
       color: var(--secondary-text-color);
       font-size: 12px;
-      line-height: 1.4;
+      line-height: 1.6;
     }
     a {
       color: var(--primary-color);

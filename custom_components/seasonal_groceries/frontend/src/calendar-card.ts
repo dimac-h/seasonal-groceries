@@ -30,7 +30,7 @@ export class CalendarCard extends SeasonalCard {
         display: grid;
         grid-template-columns: minmax(0, 1fr) repeat(12, minmax(8px, 12px));
         align-items: center;
-        gap: var(--ha-space-1, 4px) 2px;
+        gap: var(--ha-space-3, 12px) 2px;
       }
       .head {
         text-align: center;
@@ -64,7 +64,7 @@ export class CalendarCard extends SeasonalCard {
         color: var(--secondary-text-color);
       }
       .cell {
-        height: 14px;
+        height: 16px;
         border-radius: 3px;
         background: var(--divider-color);
         opacity: 0.5;

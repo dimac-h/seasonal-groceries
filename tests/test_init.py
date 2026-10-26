@@ -15,6 +15,7 @@ from custom_components.seasonal_groceries.const import DOMAIN
 from custom_components.seasonal_groceries.coordinator import (
     SeasonalGroceriesCoordinator,
 )
+from custom_components.seasonal_groceries.corrections import Correction
 from custom_components.seasonal_groceries.mealie import MealieConnectionError
 
 
@@ -85,3 +86,20 @@ async def test_frontend_module_registered_once_across_reload(
     config = register.await_args.args[0][0]
     assert config.url_path == "/seasonal_groceries_frontend"
     assert config.path.endswith("custom_components/seasonal_groceries/www")
+
+
+async def test_removing_the_entry_deletes_stored_corrections(
+    hass: HomeAssistant, hass_storage: dict
+) -> None:
+    entry = MockConfigEntry(
+        domain=DOMAIN, data={"language": "en", "mealie": {"mode": "none"}}
+    )
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await entry.runtime_data.corrections.set("text:zout", Correction(status="ignored"))
+    assert "seasonal_groceries.corrections" in hass_storage
+
+    await hass.config_entries.async_remove(entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert "seasonal_groceries.corrections" not in hass_storage

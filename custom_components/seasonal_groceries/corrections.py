@@ -78,6 +78,11 @@ class CorrectionsStore:
             correction.rejected.append(item_key)
         await self.set(key, correction)
 
+    async def async_remove(self) -> None:
+        """Delete the stored corrections."""
+        self._corrections = {}
+        await self._store.async_remove()
+
     async def _save(self) -> None:
         await self._store.async_save(
             {"corrections": {k: asdict(c) for k, c in self._corrections.items()}}

@@ -12,7 +12,7 @@ export const sharedStyles = css`
     display: flex;
     align-items: center;
     gap: var(--ha-space-2, 8px);
-    margin-block-end: var(--ha-space-3, 12px);
+    margin-block-end: var(--ha-space-4, 16px);
     font-size: var(--ha-font-size-l, 18px);
     font-weight: 600;
     color: var(--primary-text-color);
@@ -26,7 +26,7 @@ export const sharedStyles = css`
     display: flex;
     align-items: center;
     gap: var(--ha-space-2, 8px);
-    padding-block: var(--ha-space-1, 4px);
+    padding-block: var(--ha-space-2, 8px);
     color: var(--primary-text-color);
   }
   .row .name {
@@ -39,7 +39,7 @@ export const sharedStyles = css`
   .band {
     display: inline-flex;
     align-items: center;
-    gap: var(--ha-space-1, 4px);
+    gap: var(--ha-space-2, 8px);
     color: var(--secondary-text-color);
     font-size: 12px;
   }
@@ -50,7 +50,7 @@ export const sharedStyles = css`
     flex-shrink: 0;
   }
   .empty {
-    padding: var(--ha-space-4, 16px);
+    padding: var(--ha-space-6, 24px);
     text-align: center;
     color: var(--secondary-text-color);
   }

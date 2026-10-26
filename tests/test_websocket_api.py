@@ -13,6 +13,7 @@ from pytest_homeassistant_custom_component.common import (
 )
 
 from custom_components.seasonal_groceries.const import DOMAIN
+from custom_components.seasonal_groceries.coordinator import ResolveError
 from custom_components.seasonal_groceries.mealie import (
     MealieConnectionError,
     MealieFood,
@@ -401,3 +402,52 @@ async def test_commands_error_when_integration_not_loaded(
     response = await _call(ws, type="seasonal_groceries/recipes")
 
     assert response["success"] is False
+
+
+async def test_wrong_without_a_current_match_errors(
+    hass: HomeAssistant, ws: MockHAClientWebSocket, client: MagicMock
+) -> None:
+    await _setup(hass)
+
+    response = await _resolve(ws, ingredient_key="text:olijfolie", action="wrong")
+
+    assert response["success"] is False
+
+
+async def test_wrong_on_an_explicit_choice_clears_it(
+    hass: HomeAssistant, ws: MockHAClientWebSocket, client: MagicMock
+) -> None:
+    await _setup(hass)
+    await _resolve(ws, ingredient_key="food:f-tom", action="change", item_key="aardbei")
+
+    await _resolve(ws, ingredient_key="food:f-tom", action="wrong")
+
+    response = await _call(ws, type="seasonal_groceries/review_queue")
+    entry = next(
+        e for e in response["result"]["entries"] if e["ingredient_key"] == "food:f-tom"
+    )
+    assert entry["current_item_key"] != "aardbei"
+    assert "aardbei" not in entry["suggestions"]
+
+
+async def test_unknown_action_is_rejected_by_the_coordinator(
+    hass: HomeAssistant, client: MagicMock
+) -> None:
+    entry = await _setup(hass)
+
+    with pytest.raises(ResolveError):
+        await entry.runtime_data.async_resolve_entry("text:zout", "explode")
+
+
+async def test_failed_alias_write_back_still_applies_the_correction(
+    hass: HomeAssistant, ws: MockHAClientWebSocket, client: MagicMock
+) -> None:
+    client.add_food_alias = AsyncMock(side_effect=MealieConnectionError("down"))
+    await _setup(hass, options={"write_back_aliases": True})
+
+    response = await _resolve(
+        ws, ingredient_key="food:f-tom", action="change", item_key="tomaat"
+    )
+
+    assert response["success"] is True
+    assert "food:f-tom" not in await _queue_keys(ws)

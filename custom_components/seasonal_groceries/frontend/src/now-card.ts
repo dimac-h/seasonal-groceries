@@ -26,7 +26,7 @@ export class NowCard extends SeasonalCard {
     sharedStyles,
     css`
       .section-title {
-        margin-block: var(--ha-space-4, 16px) var(--ha-space-1, 4px);
+        margin-block: var(--ha-space-6, 24px) var(--ha-space-2, 8px);
         font-weight: 500;
         color: var(--primary-text-color);
       }
@@ -37,7 +37,7 @@ export class NowCard extends SeasonalCard {
       }
       ha-alert {
         display: block;
-        margin-block-end: var(--ha-space-2, 8px);
+        margin-block-end: var(--ha-space-4, 16px);
       }
     `,
   ];

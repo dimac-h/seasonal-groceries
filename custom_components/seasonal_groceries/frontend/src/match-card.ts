@@ -21,17 +21,17 @@ export class MatchCard extends SeasonalCard {
       .question {
         color: var(--primary-text-color);
         font-size: 16px;
-        margin-block-end: var(--ha-space-1, 4px);
+        margin-block-end: var(--ha-space-2, 8px);
       }
       .actions {
         display: flex;
         flex-wrap: wrap;
-        gap: var(--ha-space-2, 8px);
-        margin-block-start: var(--ha-space-3, 12px);
+        gap: var(--ha-space-3, 12px);
+        margin-block-start: var(--ha-space-6, 24px);
       }
       ha-alert {
         display: block;
-        margin-block-end: var(--ha-space-2, 8px);
+        margin-block-end: var(--ha-space-4, 16px);
       }
     `,
   ];
