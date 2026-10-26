@@ -3,20 +3,21 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import timedelta
 from typing import TYPE_CHECKING, Any
 
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.event import async_track_time_change
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN, Language
-from .corrections import ingredient_key
+from .corrections import Correction, ingredient_key
 from .dataset import Dataset, load_dataset
 from .matching import match_ingredient
 from .mealie import MealieError, client_for, credentials_for
-from .scoring import RecipeScore, rank, resolve, score_recipe
+from .scoring import RecipeScore, Resolved, rank, resolve, score_recipe
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -25,10 +26,16 @@ if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
 
     from .corrections import CorrectionsStore
-    from .mealie import MealieFood, MealieRecipe
+    from .mealie import MealieFood, MealieIngredient, MealieRecipe
 
 _LOGGER = logging.getLogger(__name__)
 UPDATE_INTERVAL = timedelta(minutes=30)
+EVENT_UPDATED = f"{DOMAIN}_updated"
+ACTIONS = ("confirm", "wrong", "change", "ignore", "no_season")
+
+
+class ResolveError(HomeAssistantError):
+    """A review action could not be applied."""
 
 
 @dataclass(frozen=True)
@@ -69,6 +76,8 @@ class SeasonalGroceriesCoordinator(DataUpdateCoordinator[CoordinatorData]):
         self._recipes: list[MealieRecipe] = []
         self._datasets: dict[Language, Dataset] = {}
         self._unsub_month: Callable[[], None] | None = None
+        self._ingredients: dict[str, MealieIngredient] = {}
+        self._resolved: dict[str, Resolved] = {}
 
     @property
     def settings(self) -> dict[str, Any]:
@@ -119,7 +128,7 @@ class SeasonalGroceriesCoordinator(DataUpdateCoordinator[CoordinatorData]):
     def _build(self, *, mealie_configured: bool) -> CoordinatorData:
         dataset, month = self.dataset, self.month
         corrections = self.corrections.all()
-        cache: dict[str, tuple[Any, Any]] = {}
+        cache: dict[str, tuple[MealieIngredient, Resolved]] = {}
         scores: list[RecipeScore] = []
         queue: dict[str, QueueEntry] = {}
         for recipe in self._recipes:
@@ -139,6 +148,8 @@ class SeasonalGroceriesCoordinator(DataUpdateCoordinator[CoordinatorData]):
                     )
             if (score := score_recipe(recipe, resolutions, dataset, month)) is not None:
                 scores.append(score)
+        self._ingredients = {k: v[0] for k, v in cache.items()}
+        self._resolved = {k: v[1] for k, v in cache.items()}
         ordered_queue = sorted(
             queue.values(),
             key=lambda e: (e.current_item_key is None, e.text.casefold()),
@@ -178,3 +189,79 @@ class SeasonalGroceriesCoordinator(DataUpdateCoordinator[CoordinatorData]):
     def _handle_midnight(self, now: Any) -> None:
         if dt_util.as_local(now).day == 1:
             self.async_recompute()
+
+    @property
+    def write_back_aliases(self) -> bool:
+        """Whether corrections are also saved as aliases in Mealie."""
+        return bool(self.settings.get("write_back_aliases", False))
+
+    async def async_resolve_entry(
+        self, key: str, action: str, item_key: str | None = None
+    ) -> None:
+        """Apply a review action to one ingredient (all recipes follow)."""
+        ingredient = self._ingredients.get(key)
+        if ingredient is None:
+            msg = f"unknown ingredient {key}"
+            raise ResolveError(msg)
+        resolved = self._resolved[key]
+        current = resolved.item_key if resolved.kind == "item" else None
+        existing = self.corrections.get(key)
+        rejected = list(existing.rejected) if existing else []
+        chosen: str | None = None
+
+        if action == "confirm":
+            if current is None:
+                msg = "nothing to confirm"
+                raise ResolveError(msg)
+            chosen = current
+            await self.corrections.set(
+                key, Correction("item", current, confirmed=True, rejected=rejected)
+            )
+        elif action == "wrong":
+            if current is None:
+                msg = "nothing to reject"
+                raise ResolveError(msg)
+            await self.corrections.add_rejection(key, current)
+            correction = self.corrections.get(key)
+            if correction is not None and correction.item_key == current:
+                correction.item_key, correction.confirmed = None, False
+                await self.corrections.set(key, correction)
+        elif action == "change":
+            if item_key not in {item.key for item in self.dataset.items}:
+                msg = f"unknown item {item_key}"
+                raise ResolveError(msg)
+            chosen = item_key
+            await self.corrections.set(
+                key, Correction("item", item_key, confirmed=True, rejected=rejected)
+            )
+        elif action in ("ignore", "no_season"):
+            status = "ignored" if action == "ignore" else "no_season"
+            await self.corrections.set(key, Correction(status, rejected=rejected))  # type: ignore[arg-type]
+        else:
+            msg = f"unknown action {action}"
+            raise ResolveError(msg)
+
+        if chosen is not None:
+            await self._write_back_alias(ingredient, chosen)
+        self.async_recompute()
+
+    async def _write_back_alias(
+        self, ingredient: MealieIngredient, item_key: str
+    ) -> None:
+        """Teach Mealie the seasonal name, so the next match is exact."""
+        if not (self.write_back_aliases and ingredient.food_id):
+            return
+        item = next(i for i in self.dataset.items if i.key == item_key)
+        try:
+            credentials = credentials_for(self.hass, self.settings.get("mealie", {}))
+            if credentials is None:
+                return
+            await client_for(self.hass, credentials).add_food_alias(
+                ingredient.food_id, item.name
+            )
+        except MealieError:
+            _LOGGER.warning("Could not save the alias in Mealie", exc_info=True)
+            return
+        food = self._foods.get(ingredient.food_id)
+        if food is not None:
+            self._foods[food.id] = replace(food, aliases=(*food.aliases, item.name))

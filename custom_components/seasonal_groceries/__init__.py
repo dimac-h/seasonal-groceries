@@ -7,8 +7,9 @@ from typing import TYPE_CHECKING
 from homeassistant.helpers import config_validation as cv
 
 from .const import DOMAIN
-from .coordinator import SeasonalGroceriesCoordinator
+from .coordinator import EVENT_UPDATED, SeasonalGroceriesCoordinator
 from .corrections import CorrectionsStore
+from .websocket_api import async_register_commands
 
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
@@ -21,7 +22,8 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Set up the integration (config entries only)."""
+    """Register the WebSocket API; entries are set up separately."""
+    async_register_commands(hass)
     return True
 
 
@@ -39,6 +41,10 @@ async def async_setup_entry(
     coordinator = SeasonalGroceriesCoordinator(hass, entry, corrections)
     await coordinator.async_refresh()
     entry.runtime_data = coordinator
+    # A listener is also what keeps the coordinator's periodic refresh running.
+    entry.async_on_unload(
+        coordinator.async_add_listener(lambda: hass.bus.async_fire(EVENT_UPDATED))
+    )
     coordinator.async_start_month_listener()
     entry.async_on_unload(coordinator.async_stop_month_listener)
     return True
