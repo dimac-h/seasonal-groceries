@@ -1,0 +1,69 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Seizoensgroenten",
+        "description": "Kies de taal van de namen van groenten en fruit. Recepten worden in deze taal gekoppeld.",
+        "data": {
+          "language": "Taal van de boodschappen"
+        }
+      },
+      "mealie": {
+        "title": "Mealie koppelen (optioneel)",
+        "description": "Koppel Mealie om je recepten te rangschikken op hoe seizoensgebonden ze zijn. Je kunt dit overslaan en alleen de seizoensinformatie gebruiken.",
+        "menu_options": {
+          "reuse": "De bestaande Mealie-integratie van Home Assistant gebruiken",
+          "manual": "Mealie-URL en API-token invoeren",
+          "skip": "Overslaan: alleen seizoensinformatie"
+        }
+      },
+      "reuse": {
+        "title": "Een bestaande Mealie-integratie gebruiken",
+        "description": "De URL en het token worden uit die integratie gelezen, dus een gewijzigd token wordt automatisch overgenomen.",
+        "data": {
+          "entry_id": "Mealie-integratie"
+        }
+      },
+      "manual": {
+        "title": "Mealie koppelen",
+        "description": "Maak een API-token aan in Mealie bij je profielinstellingen.",
+        "data": {
+          "url": "Mealie-URL",
+          "token": "API-token",
+          "verify_ssl": "SSL-certificaat controleren"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Kan geen verbinding maken met Mealie.",
+      "invalid_auth": "Mealie heeft het API-token geweigerd."
+    },
+    "abort": {
+      "single_instance_allowed": "Seizoensgroenten is al ingesteld.",
+      "reauth_successful": "Mealie-verbinding bijgewerkt.",
+      "reconfigure_successful": "Mealie-verbinding bijgewerkt."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opties voor Seizoensgroenten",
+        "data": {
+          "language": "Taal van de boodschappen",
+          "write_back_aliases": "Correcties als alias opslaan in Mealie"
+        },
+        "data_description": {
+          "write_back_aliases": "Als je een koppeling corrigeert in de controlekaart, wordt de ingrediënttekst ook als alias aan het Mealie-product toegevoegd."
+        }
+      }
+    }
+  },
+  "selector": {
+    "language": {
+      "options": {
+        "nl": "Nederlands",
+        "en": "English"
+      }
+    }
+  }
+}

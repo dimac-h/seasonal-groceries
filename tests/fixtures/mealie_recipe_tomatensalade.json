@@ -1,0 +1,137 @@
+{
+ "id": "568b0a37-db4e-4f0b-9310-5265db8bfc57",
+ "userId": "617a2f4c-b061-4a2e-bcd0-c0035397930f",
+ "householdId": "2c10d44f-a74a-4e76-9b42-05c2dc51541f",
+ "groupId": "2dc70085-dcd6-473f-9628-9cd64f46d6a5",
+ "name": "Tomatensalade",
+ "slug": "tomatensalade",
+ "image": null,
+ "recipeServings": 0.0,
+ "recipeYieldQuantity": 0.0,
+ "recipeYield": null,
+ "totalTime": null,
+ "prepTime": null,
+ "cookTime": null,
+ "performTime": null,
+ "totalTimeSeconds": null,
+ "prepTimeSeconds": null,
+ "performTimeSeconds": null,
+ "description": "",
+ "recipeCategory": [],
+ "tags": [],
+ "tools": [],
+ "rating": null,
+ "orgURL": null,
+ "dateAdded": "2026-10-26",
+ "dateUpdated": "2026-10-26T10:40:43.360157Z",
+ "createdAt": "2026-10-26T10:40:43.320245Z",
+ "updatedAt": "2026-10-26T10:40:43.360735Z",
+ "recipeIngredient": [
+  {
+   "quantity": 1.0,
+   "unit": null,
+   "food": {
+    "id": "2aa4b09e-1093-451a-b3e0-fee98f0533d3",
+    "name": "tomaat",
+    "pluralName": null,
+    "description": "",
+    "extras": {},
+    "labelId": null,
+    "aliases": [
+     {
+      "name": "tomaten"
+     },
+     {
+      "name": "pomodori"
+     }
+    ],
+    "substitutions": [],
+    "householdsWithIngredientFood": [],
+    "label": null,
+    "recipeCount": 0,
+    "createdAt": "2026-10-26T10:40:43.125859Z",
+    "updatedAt": "2026-10-26T10:40:43.125860Z"
+   },
+   "referencedRecipe": null,
+   "note": "",
+   "display": "1 tomaat",
+   "title": null,
+   "originalText": null,
+   "substitutions": [],
+   "referenceId": "ab9f5b15-d361-4df2-b822-636af4b47784"
+  },
+  {
+   "quantity": 1.0,
+   "unit": null,
+   "food": null,
+   "referencedRecipe": null,
+   "note": "verse basilicum",
+   "display": "1 verse basilicum",
+   "title": null,
+   "originalText": null,
+   "substitutions": [],
+   "referenceId": "6f5653cb-b808-480c-be4f-a93477668cf9"
+  },
+  {
+   "quantity": 1.0,
+   "unit": null,
+   "food": {
+    "id": "60f6bbc1-31bf-4d99-a0ea-cb86f5e57910",
+    "name": "olijfolie",
+    "pluralName": null,
+    "description": "",
+    "extras": {},
+    "labelId": null,
+    "aliases": [],
+    "substitutions": [],
+    "householdsWithIngredientFood": [],
+    "label": null,
+    "recipeCount": 0,
+    "createdAt": "2026-10-26T10:40:43.162856Z",
+    "updatedAt": "2026-10-26T10:40:43.162856Z"
+   },
+   "referencedRecipe": null,
+   "note": "",
+   "display": "1 olijfolie",
+   "title": null,
+   "originalText": null,
+   "substitutions": [],
+   "referenceId": "a381516a-2799-4655-aa9e-0f34c4c2b676"
+  }
+ ],
+ "recipeInstructions": [
+  {
+   "id": "b65414cb-0cc3-4409-a009-93561e11b618",
+   "title": "",
+   "summary": "",
+   "text": "Recipe steps as well as other fields in the recipe page support markdown syntax.\n\n**Add a link**\n\n[My Link](https://demo.mealie.io)\n",
+   "ingredientReferences": [],
+   "noteReferences": []
+  }
+ ],
+ "nutrition": {
+  "calories": null,
+  "carbohydrateContent": null,
+  "cholesterolContent": null,
+  "fatContent": null,
+  "fiberContent": null,
+  "proteinContent": null,
+  "saturatedFatContent": null,
+  "sodiumContent": null,
+  "sugarContent": null,
+  "transFatContent": null,
+  "unsaturatedFatContent": null
+ },
+ "settings": {
+  "public": false,
+  "showNutrition": false,
+  "showAssets": false,
+  "landscapeView": false,
+  "disableComments": false,
+  "locked": false
+ },
+ "assets": [],
+ "notes": [],
+ "extras": {},
+ "comments": []
+}
