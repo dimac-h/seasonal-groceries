@@ -8,6 +8,14 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 from aiohttp import ClientError
+from homeassistant.config_entries import ConfigEntryState
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from pytest_homeassistant_custom_component.common import (
+    MockConfigEntry,
+    MockModule,
+    mock_integration,
+)
+
 from custom_components.seasonal_groceries.mealie import (
     MealieAuthError,
     MealieClient,
@@ -17,9 +25,6 @@ from custom_components.seasonal_groceries.mealie import (
     credentials_from_entry,
     discover_mealie_entries,
 )
-from homeassistant.config_entries import ConfigEntryState
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -185,6 +190,8 @@ async def test_add_food_alias_skips_existing_alias(
 
 
 def _core_entry(hass: HomeAssistant, **data: Any) -> MockConfigEntry:
+    # Stub HA's own Mealie integration: the real one needs the aiomealie library.
+    mock_integration(hass, MockModule("mealie"))
     entry = MockConfigEntry(
         domain="mealie",
         title="Mealie",

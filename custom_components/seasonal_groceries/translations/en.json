@@ -3,11 +3,65 @@
     "step": {
       "user": {
         "title": "Seasonal Groceries",
-        "description": "Set up Seasonal Groceries."
+        "description": "Choose the language of the vegetable and fruit names. Recipes are matched in this language.",
+        "data": {
+          "language": "Grocery language"
+        }
+      },
+      "mealie": {
+        "title": "Connect Mealie (optional)",
+        "description": "Connect Mealie to rank your recipes by how seasonal they are. You can skip this and only use the seasonal information.",
+        "menu_options": {
+          "reuse": "Use the existing Home Assistant Mealie integration",
+          "manual": "Enter the Mealie URL and API token",
+          "skip": "Skip: seasonal information only"
+        }
+      },
+      "reuse": {
+        "title": "Use an existing Mealie integration",
+        "description": "The URL and token are read from that integration, so a changed token is picked up automatically.",
+        "data": {
+          "entry_id": "Mealie integration"
+        }
+      },
+      "manual": {
+        "title": "Connect Mealie",
+        "description": "Create an API token in Mealie under your profile settings.",
+        "data": {
+          "url": "Mealie URL",
+          "token": "API token",
+          "verify_ssl": "Verify SSL certificate"
+        }
       }
+    },
+    "error": {
+      "cannot_connect": "Could not connect to Mealie.",
+      "invalid_auth": "Mealie rejected the API token."
     },
     "abort": {
       "single_instance_allowed": "Seasonal Groceries is already set up."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Seasonal Groceries options",
+        "data": {
+          "language": "Grocery language",
+          "write_back_aliases": "Save corrections as aliases in Mealie"
+        },
+        "data_description": {
+          "write_back_aliases": "When you correct a match in the review card, also add the ingredient text as an alias on the Mealie food."
+        }
+      }
+    }
+  },
+  "selector": {
+    "language": {
+      "options": {
+        "nl": "Nederlands",
+        "en": "English"
+      }
     }
   }
 }
