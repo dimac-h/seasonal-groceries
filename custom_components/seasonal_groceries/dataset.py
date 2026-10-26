@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 ProduceType = Literal["vegetable", "fruit"]
 
-BUNDLED_DIR = Path(__file__).parent / "data"
+BUNDLED_PATH = Path(__file__).parent / "data" / "produce.json"
 _TYPES = ("vegetable", "fruit")
 
 
@@ -62,14 +62,14 @@ class Dataset:
 _MONTHS = range(1, 13)
 
 
-def _parse_item(raw: Mapping[str, Any], names: Mapping[str, Any]) -> Item:
+def _parse_item(raw: Mapping[str, Any], language: Language) -> Item:
     key = raw.get("key")
     if not isinstance(key, str) or not key:
         msg = "item without key"
         raise ValueError(msg)
-    entry = names.get(key)
-    if not entry or not str(entry.get("name", "")).strip():
-        msg = f"{key}: missing name in the language file"
+    name = str(raw.get("names", {}).get(language.value, "")).strip()
+    if not name:
+        msg = f"{key}: missing {language.value} name"
         raise ValueError(msg)
     if raw.get("type") not in _TYPES:
         msg = f"{key}: type must be one of {_TYPES}"
@@ -84,11 +84,11 @@ def _parse_item(raw: Mapping[str, Any], names: Mapping[str, Any]) -> Item:
         raise ValueError(msg)
     return Item(
         key=key,
-        name=entry["name"],
+        name=name,
         type=raw["type"],
         months=frozenset(months),
         residues=None if residues is None else float(residues),
-        aliases=tuple(entry.get("aliases", [])),
+        aliases=tuple(raw.get("aliases", {}).get(language.value, [])),
     )
 
 
@@ -108,30 +108,17 @@ def _parse_cutoffs(raw: Mapping[str, Any]) -> dict[ProduceType, Cutoffs]:
     return result
 
 
-def load_dataset(language: Language, data_dir: Path | None = None) -> Dataset:
-    """
-    Load and validate the dataset in one language.
+def load_dataset(language: Language, path: Path | None = None) -> Dataset:
+    """Load and validate the dataset, with names and aliases in one language."""
+    raw = json.loads((path or BUNDLED_PATH).read_text(encoding="utf-8"))
+    if raw.get("schema_version") != 1:
+        msg = "unsupported schema_version"
+        raise ValueError(msg)
 
-    Shared data lives in `produce.json`; names and aliases in `produce_<language>.json`.
-    """
-    directory = data_dir or BUNDLED_DIR
-    raw = json.loads((directory / "produce.json").read_text(encoding="utf-8"))
-    names_raw = json.loads(
-        (directory / f"produce_{language.value}.json").read_text(encoding="utf-8")
-    )
-    for document in (raw, names_raw):
-        if document.get("schema_version") != 1:
-            msg = "unsupported schema_version"
-            raise ValueError(msg)
-
-    items = tuple(_parse_item(entry, names_raw["items"]) for entry in raw["items"])
+    items = tuple(_parse_item(entry, language) for entry in raw["items"])
     keys = [item.key for item in items]
     if len(keys) != len(set(keys)):
         msg = "duplicate item keys"
-        raise ValueError(msg)
-    unknown = set(names_raw["items"]) - set(keys)
-    if unknown:
-        msg = f"language file names unknown items: {sorted(unknown)}"
         raise ValueError(msg)
 
     credit_map = {

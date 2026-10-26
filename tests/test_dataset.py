@@ -3,35 +3,31 @@
 from __future__ import annotations
 
 import json
-import shutil
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
 from custom_components.seasonal_groceries.const import Language
 from custom_components.seasonal_groceries.dataset import (
-    BUNDLED_DIR,
+    BUNDLED_PATH,
     Dataset,
     Item,
     load_dataset,
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from pathlib import Path
 
 ALL_LANGUAGES = list(Language)
 
 
-def _copy_data(tmp_path: Path) -> Path:
-    target = tmp_path / "data"
-    shutil.copytree(BUNDLED_DIR, target)
+def _edited_copy(tmp_path: Path, change: Callable[[dict[str, Any]], object]) -> Path:
+    document = json.loads(BUNDLED_PATH.read_text(encoding="utf-8"))
+    change(document)
+    target = tmp_path / "produce.json"
+    target.write_text(json.dumps(document), encoding="utf-8")
     return target
-
-
-def _edit(path: Path, change: object) -> None:
-    document = json.loads(path.read_text(encoding="utf-8"))
-    change(document)  # type: ignore[operator]
-    path.write_text(json.dumps(document), encoding="utf-8")
 
 
 def _item(dataset: Dataset, key: str) -> Item:
@@ -46,16 +42,14 @@ def test_loads_bundled_file_for_every_language(language: Language) -> None:
     assert all(item.name.strip() for item in dataset.items)
 
 
-def test_every_language_file_covers_the_same_items() -> None:
-    shared = {
-        i["key"]
-        for i in json.loads((BUNDLED_DIR / "produce.json").read_text())["items"]
-    }
-    for language in Language:
-        named = json.loads(
-            (BUNDLED_DIR / f"produce_{language.value}.json").read_text(encoding="utf-8")
-        )["items"]
-        assert set(named) == shared, language
+def test_every_item_has_a_name_in_every_language() -> None:
+    document = json.loads(BUNDLED_PATH.read_text(encoding="utf-8"))
+    for item in document["items"]:
+        for language in Language:
+            assert item["names"].get(language.value, "").strip(), (
+                item["key"],
+                language,
+            )
 
 
 def test_names_come_from_the_requested_language() -> None:
@@ -70,31 +64,24 @@ def test_aliases_come_from_the_requested_language() -> None:
 
 
 def test_rejects_duplicate_keys(tmp_path: Path) -> None:
-    data = _copy_data(tmp_path)
-    _edit(data / "produce.json", lambda d: d["items"].append(dict(d["items"][0])))
+    path = _edited_copy(tmp_path, lambda d: d["items"].append(dict(d["items"][0])))
     with pytest.raises(ValueError, match="duplicate"):
-        load_dataset(Language.EN, data)
+        load_dataset(Language.EN, path)
 
 
 def test_rejects_month_outside_1_12(tmp_path: Path) -> None:
-    data = _copy_data(tmp_path)
-    _edit(data / "produce.json", lambda d: d["items"][0].update(months=[0, 13]))
+    path = _edited_copy(tmp_path, lambda d: d["items"][0].update(months=[0, 13]))
     with pytest.raises(ValueError, match="month"):
-        load_dataset(Language.EN, data)
+        load_dataset(Language.EN, path)
 
 
-def test_rejects_item_missing_from_language_file(tmp_path: Path) -> None:
-    data = _copy_data(tmp_path)
-    _edit(data / "produce_en.json", lambda d: d["items"].pop("tomaat"))
-    with pytest.raises(ValueError, match="tomaat"):
-        load_dataset(Language.EN, data)
-
-
-def test_rejects_unknown_item_in_language_file(tmp_path: Path) -> None:
-    data = _copy_data(tmp_path)
-    _edit(data / "produce_en.json", lambda d: d["items"].update(ghost={"name": "x"}))
-    with pytest.raises(ValueError, match="ghost"):
-        load_dataset(Language.EN, data)
+def test_rejects_item_without_a_name_in_the_requested_language(
+    tmp_path: Path,
+) -> None:
+    path = _edited_copy(tmp_path, lambda d: d["items"][0]["names"].pop("en"))
+    with pytest.raises(ValueError, match="en"):
+        load_dataset(Language.EN, path)
+    assert load_dataset(Language.NL, path)
 
 
 def test_credits_name_voedingscentrum_and_pan() -> None:
