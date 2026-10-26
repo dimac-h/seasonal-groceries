@@ -1,0 +1,18 @@
+[project]
+name = "seasonal-groceries-integration"
+version = "0.1.0"
+description = "Seasonal Groceries custom integration for Home Assistant"
+requires-python = ">=3.14"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest-homeassistant-custom-component>=0.13.316",
+]
+
+[tool.setuptools]
+packages = []
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

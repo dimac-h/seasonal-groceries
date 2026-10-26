@@ -1,0 +1,13 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Seasonal Groceries",
+        "description": "Set up Seasonal Groceries."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Seasonal Groceries is already set up."
+    }
+  }
+}
