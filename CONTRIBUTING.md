@@ -12,7 +12,9 @@ The calendar and pesticide levels live in `custom_components/seasonal_groceries/
 
 ## Adding a language
 
-See "Adding a language" in the [README](README.md#adding-a-language).
+1. Add a member to the `Language` enum in `custom_components/seasonal_groceries/const.py`.
+2. Add `names.<code>` (and optional `aliases.<code>`) to every item in `data/produce.json`; a test checks that none is missing.
+3. Add `translations/<code>.json` (setup screens) and `frontend/src/translations/<code>.json` (cards).
 
 ## Pull requests
 
