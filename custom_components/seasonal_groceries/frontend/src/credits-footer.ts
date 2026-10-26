@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { property } from 'lit/decorators.js';
+import { customElement } from './register';
 import type { Credit, ProduceType } from './api';
 import { translator } from './i18n';
 

@@ -1,5 +1,6 @@
 import { html, css } from 'lit';
-import { customElement, state } from 'lit/decorators.js';
+import { state } from 'lit/decorators.js';
+import { customElement } from './register';
 import { mdiCalendarMonth } from '@mdi/js';
 import './calendar-card-editor';
 import './credits-footer';
@@ -27,7 +28,7 @@ export class CalendarCard extends SeasonalCard {
     css`
       .grid {
         display: grid;
-        grid-template-columns: minmax(0, 1.8fr) repeat(12, minmax(8px, 1fr));
+        grid-template-columns: minmax(0, 1fr) repeat(12, minmax(8px, 12px));
         align-items: center;
         gap: var(--ha-space-1, 4px) 2px;
       }

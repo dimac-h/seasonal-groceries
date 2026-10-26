@@ -1,4 +1,4 @@
-import { customElement } from 'lit/decorators.js';
+import { customElement } from './register';
 import { SeasonalEditor, produceTypeSelector } from './base-editor';
 import type { NowCardConfig } from './now-card';
 import type { Translate } from './i18n';

@@ -1,5 +1,6 @@
 import { html, css } from 'lit';
-import { customElement, state } from 'lit/decorators.js';
+import { state } from 'lit/decorators.js';
+import { customElement } from './register';
 import { mdiSprout } from '@mdi/js';
 import './credits-footer';
 import './now-card-editor';

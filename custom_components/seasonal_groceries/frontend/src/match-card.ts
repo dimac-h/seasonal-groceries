@@ -1,5 +1,6 @@
 import { html, css } from 'lit';
-import { customElement, state } from 'lit/decorators.js';
+import { state } from 'lit/decorators.js';
+import { customElement } from './register';
 import { mdiLinkVariant } from '@mdi/js';
 import './match-card-editor';
 import { getItemOptions, getReviewQueue, resolveEntry } from './api';
