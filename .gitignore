@@ -32,3 +32,4 @@ docs/
 .claude/
 .coverage
 htmlcov/
+FUTURE_WORK.md
