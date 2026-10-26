@@ -10,27 +10,24 @@ from typing import TYPE_CHECKING, Any, Literal
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
+    from .const import Language
+
 ProduceType = Literal["vegetable", "fruit"]
 
-BUNDLED_PATH = Path(__file__).parent / "data" / "produce.json"
-LANGUAGES = ("nl", "en")
+BUNDLED_DIR = Path(__file__).parent / "data"
 _TYPES = ("vegetable", "fruit")
 
 
 @dataclass(frozen=True)
 class Item:
-    """One vegetable or fruit."""
+    """One vegetable or fruit, named in the dataset's language."""
 
     key: str
-    names: Mapping[str, str]
+    name: str
     type: ProduceType
     months: frozenset[int]
     residues: float | None
-    aliases: Mapping[str, tuple[str, ...]]
-
-    def name(self, language: str) -> str:
-        """Return the name in `language`, falling back to English."""
-        return self.names.get(language) or self.names["en"]
+    aliases: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -65,16 +62,15 @@ class Dataset:
 _MONTHS = range(1, 13)
 
 
-def _parse_item(raw: Mapping[str, Any]) -> Item:
+def _parse_item(raw: Mapping[str, Any], names: Mapping[str, Any]) -> Item:
     key = raw.get("key")
     if not isinstance(key, str) or not key:
         msg = "item without key"
         raise ValueError(msg)
-    names = raw.get("names", {})
-    for language in LANGUAGES:
-        if not str(names.get(language, "")).strip():
-            msg = f"{key}: missing {language} name"
-            raise ValueError(msg)
+    entry = names.get(key)
+    if not entry or not str(entry.get("name", "")).strip():
+        msg = f"{key}: missing name in the language file"
+        raise ValueError(msg)
     if raw.get("type") not in _TYPES:
         msg = f"{key}: type must be one of {_TYPES}"
         raise ValueError(msg)
@@ -86,14 +82,13 @@ def _parse_item(raw: Mapping[str, Any]) -> Item:
     if residues is not None and not isinstance(residues, (int, float)):
         msg = f"{key}: residues must be a number or null"
         raise ValueError(msg)
-    aliases = {lang: tuple(values) for lang, values in raw.get("aliases", {}).items()}
     return Item(
         key=key,
-        names=dict(names),
+        name=entry["name"],
         type=raw["type"],
         months=frozenset(months),
         residues=None if residues is None else float(residues),
-        aliases=aliases,
+        aliases=tuple(entry.get("aliases", [])),
     )
 
 
@@ -113,17 +108,30 @@ def _parse_cutoffs(raw: Mapping[str, Any]) -> dict[ProduceType, Cutoffs]:
     return result
 
 
-def load_dataset(path: Path | None = None) -> Dataset:
-    """Load and validate a dataset file (the bundled one by default)."""
-    raw = json.loads((path or BUNDLED_PATH).read_text(encoding="utf-8"))
-    if raw.get("schema_version") != 1:
-        msg = "unsupported schema_version"
-        raise ValueError(msg)
+def load_dataset(language: Language, data_dir: Path | None = None) -> Dataset:
+    """
+    Load and validate the dataset in one language.
 
-    items = tuple(_parse_item(entry) for entry in raw["items"])
+    Shared data lives in `produce.json`; names and aliases in `produce_<language>.json`.
+    """
+    directory = data_dir or BUNDLED_DIR
+    raw = json.loads((directory / "produce.json").read_text(encoding="utf-8"))
+    names_raw = json.loads(
+        (directory / f"produce_{language.value}.json").read_text(encoding="utf-8")
+    )
+    for document in (raw, names_raw):
+        if document.get("schema_version") != 1:
+            msg = "unsupported schema_version"
+            raise ValueError(msg)
+
+    items = tuple(_parse_item(entry, names_raw["items"]) for entry in raw["items"])
     keys = [item.key for item in items]
     if len(keys) != len(set(keys)):
         msg = "duplicate item keys"
+        raise ValueError(msg)
+    unknown = set(names_raw["items"]) - set(keys)
+    if unknown:
+        msg = f"language file names unknown items: {sorted(unknown)}"
         raise ValueError(msg)
 
     credit_map = {

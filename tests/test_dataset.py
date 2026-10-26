@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import json
+import shutil
 from typing import TYPE_CHECKING
 
 import pytest
 
+from custom_components.seasonal_groceries.const import Language
 from custom_components.seasonal_groceries.dataset import (
-    BUNDLED_PATH,
+    BUNDLED_DIR,
     Dataset,
     Item,
     load_dataset,
@@ -17,56 +19,86 @@ from custom_components.seasonal_groceries.dataset import (
 if TYPE_CHECKING:
     from pathlib import Path
 
-
-def _raw() -> dict:
-    return json.loads(BUNDLED_PATH.read_text(encoding="utf-8"))
+ALL_LANGUAGES = list(Language)
 
 
-def _write(tmp_path: Path, raw: dict) -> Path:
-    path = tmp_path / "produce.json"
-    path.write_text(json.dumps(raw), encoding="utf-8")
-    return path
+def _copy_data(tmp_path: Path) -> Path:
+    target = tmp_path / "data"
+    shutil.copytree(BUNDLED_DIR, target)
+    return target
+
+
+def _edit(path: Path, change: object) -> None:
+    document = json.loads(path.read_text(encoding="utf-8"))
+    change(document)  # type: ignore[operator]
+    path.write_text(json.dumps(document), encoding="utf-8")
 
 
 def _item(dataset: Dataset, key: str) -> Item:
     return next(i for i in dataset.items if i.key == key)
 
 
-def test_loads_bundled_file() -> None:
-    dataset = load_dataset()
+@pytest.mark.parametrize("language", ALL_LANGUAGES)
+def test_loads_bundled_file_for_every_language(language: Language) -> None:
+    dataset = load_dataset(language)
     assert len(dataset.items) >= 70
     assert {"calendar", "pesticides"} <= set(dataset.credits)
+    assert all(item.name.strip() for item in dataset.items)
+
+
+def test_every_language_file_covers_the_same_items() -> None:
+    shared = {
+        i["key"]
+        for i in json.loads((BUNDLED_DIR / "produce.json").read_text())["items"]
+    }
+    for language in Language:
+        named = json.loads(
+            (BUNDLED_DIR / f"produce_{language.value}.json").read_text(encoding="utf-8")
+        )["items"]
+        assert set(named) == shared, language
+
+
+def test_names_come_from_the_requested_language() -> None:
+    assert _item(load_dataset(Language.NL), "tomaat").name == "tomaat"
+    assert _item(load_dataset(Language.EN), "tomaat").name == "tomato"
+
+
+def test_aliases_come_from_the_requested_language() -> None:
+    assert "rode kool" in _item(load_dataset(Language.NL), "rodekool").aliases
+    assert "zucchini" in _item(load_dataset(Language.EN), "courgette").aliases
+    assert "zucchini" not in _item(load_dataset(Language.NL), "courgette").aliases
 
 
 def test_rejects_duplicate_keys(tmp_path: Path) -> None:
-    raw = _raw()
-    raw["items"].append(dict(raw["items"][0]))
+    data = _copy_data(tmp_path)
+    _edit(data / "produce.json", lambda d: d["items"].append(dict(d["items"][0])))
     with pytest.raises(ValueError, match="duplicate"):
-        load_dataset(_write(tmp_path, raw))
+        load_dataset(Language.EN, data)
 
 
 def test_rejects_month_outside_1_12(tmp_path: Path) -> None:
-    raw = _raw()
-    raw["items"][0]["months"] = [0, 13]
+    data = _copy_data(tmp_path)
+    _edit(data / "produce.json", lambda d: d["items"][0].update(months=[0, 13]))
     with pytest.raises(ValueError, match="month"):
-        load_dataset(_write(tmp_path, raw))
+        load_dataset(Language.EN, data)
 
 
-def test_every_item_has_nl_and_en_name() -> None:
-    for item in load_dataset().items:
-        assert item.names["nl"].strip(), item.key
-        assert item.names["en"].strip(), item.key
+def test_rejects_item_missing_from_language_file(tmp_path: Path) -> None:
+    data = _copy_data(tmp_path)
+    _edit(data / "produce_en.json", lambda d: d["items"].pop("tomaat"))
+    with pytest.raises(ValueError, match="tomaat"):
+        load_dataset(Language.EN, data)
 
 
-def test_item_name_falls_back_to_english() -> None:
-    item = _item(load_dataset(), "tomaat")
-    assert item.name("nl") == "tomaat"
-    assert item.name("en") == "tomato"
-    assert item.name("de") == "tomato"
+def test_rejects_unknown_item_in_language_file(tmp_path: Path) -> None:
+    data = _copy_data(tmp_path)
+    _edit(data / "produce_en.json", lambda d: d["items"].update(ghost={"name": "x"}))
+    with pytest.raises(ValueError, match="ghost"):
+        load_dataset(Language.EN, data)
 
 
 def test_credits_name_voedingscentrum_and_pan() -> None:
-    credit_map = load_dataset().credits
+    credit_map = load_dataset(Language.EN).credits
     assert {"Voedingscentrum", "Velt", "Bionext"} <= set(
         credit_map["calendar"].organisations
     )
@@ -78,7 +110,7 @@ def test_credits_name_voedingscentrum_and_pan() -> None:
 
 
 def test_cutoffs_per_type() -> None:
-    cutoffs = load_dataset().cutoffs
+    cutoffs = load_dataset(Language.EN).cutoffs
     assert (cutoffs["vegetable"].green_max, cutoffs["vegetable"].orange_max) == (
         0.4,
         1.8,
@@ -108,15 +140,15 @@ def test_cutoffs_per_type() -> None:
     ],
 )
 def test_pan_residues(key: str, residues: float) -> None:
-    assert _item(load_dataset(), key).residues == residues
+    assert _item(load_dataset(Language.EN), key).residues == residues
 
 
 def test_unknown_residues_is_none() -> None:
-    assert _item(load_dataset(), "aardpeer").residues is None
+    assert _item(load_dataset(Language.EN), "aardpeer").residues is None
 
 
 def test_calendar_spot_checks() -> None:
-    dataset = load_dataset()
+    dataset = load_dataset(Language.EN)
     assert _item(dataset, "prei").months == frozenset(range(1, 13))
     assert _item(dataset, "pompoen").months == frozenset({1, 2, 3, 4, 8, 9, 10, 11, 12})
     assert _item(dataset, "asperge").months == frozenset({4, 5, 6})

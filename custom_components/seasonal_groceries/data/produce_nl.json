@@ -1,0 +1,245 @@
+{
+ "schema_version": 1,
+ "items": {
+  "aardpeer": {
+   "name": "aardpeer"
+  },
+  "andijvie": {
+   "name": "andijvie"
+  },
+  "artisjok": {
+   "name": "artisjok"
+  },
+  "asperge": {
+   "name": "asperge"
+  },
+  "aubergine": {
+   "name": "aubergine"
+  },
+  "bleekselderij": {
+   "name": "bleekselderij"
+  },
+  "bloemkool": {
+   "name": "bloemkool"
+  },
+  "boerenkool": {
+   "name": "boerenkool"
+  },
+  "broccoli": {
+   "name": "broccoli"
+  },
+  "chinese-kool": {
+   "name": "Chinese kool",
+   "aliases": [
+    "chinese kool"
+   ]
+  },
+  "courgette": {
+   "name": "courgette"
+  },
+  "doperwt": {
+   "name": "doperwt"
+  },
+  "groene-selderij": {
+   "name": "groene selderij"
+  },
+  "knolselderij": {
+   "name": "knolselderij"
+  },
+  "komkommer": {
+   "name": "komkommer"
+  },
+  "koolraap": {
+   "name": "koolraap"
+  },
+  "koolrabi": {
+   "name": "koolrabi"
+  },
+  "kropsla": {
+   "name": "kropsla",
+   "aliases": [
+    "sla"
+   ]
+  },
+  "mais": {
+   "name": "mais"
+  },
+  "meiraap": {
+   "name": "meiraap"
+  },
+  "paddenstoelen": {
+   "name": "paddenstoelen",
+   "aliases": [
+    "champignon",
+    "champignons"
+   ]
+  },
+  "paksoi": {
+   "name": "paksoi"
+  },
+  "paprika": {
+   "name": "paprika",
+   "aliases": [
+    "paprika's"
+   ]
+  },
+  "pastinaak": {
+   "name": "pastinaak"
+  },
+  "peultjes": {
+   "name": "peultjes"
+  },
+  "pompoen": {
+   "name": "pompoen"
+  },
+  "prei": {
+   "name": "prei"
+  },
+  "raap": {
+   "name": "raap"
+  },
+  "raapsteel": {
+   "name": "raapsteel"
+  },
+  "rabarber": {
+   "name": "rabarber"
+  },
+  "radijs": {
+   "name": "radijs"
+  },
+  "rammenas": {
+   "name": "rammenas"
+  },
+  "rode-biet": {
+   "name": "rode biet",
+   "aliases": [
+    "bieten",
+    "bietjes"
+   ]
+  },
+  "rodekool": {
+   "name": "rodekool",
+   "aliases": [
+    "rode kool"
+   ]
+  },
+  "roodlof": {
+   "name": "roodlof"
+  },
+  "savooikool": {
+   "name": "savooikool"
+  },
+  "schorseneer": {
+   "name": "schorseneer"
+  },
+  "snijbiet": {
+   "name": "snijbiet"
+  },
+  "snijboon": {
+   "name": "snijboon"
+  },
+  "sperzieboon": {
+   "name": "sperzieboon",
+   "aliases": [
+    "princesseboon",
+    "boontjes"
+   ]
+  },
+  "spinazie": {
+   "name": "spinazie"
+  },
+  "spitskool": {
+   "name": "spitskool"
+  },
+  "spruiten": {
+   "name": "spruiten",
+   "aliases": [
+    "spruitjes"
+   ]
+  },
+  "tomaat": {
+   "name": "tomaat"
+  },
+  "tuinboon": {
+   "name": "tuinboon"
+  },
+  "ui": {
+   "name": "ui"
+  },
+  "veldsla": {
+   "name": "veldsla"
+  },
+  "venkel": {
+   "name": "venkel"
+  },
+  "waterkers": {
+   "name": "waterkers"
+  },
+  "winterpostelein": {
+   "name": "winterpostelein"
+  },
+  "witlof": {
+   "name": "witlof"
+  },
+  "witte-kool": {
+   "name": "witte kool"
+  },
+  "wortel": {
+   "name": "wortel"
+  },
+  "aardbei": {
+   "name": "aardbei"
+  },
+  "abrikoos": {
+   "name": "abrikoos"
+  },
+  "appel": {
+   "name": "appel"
+  },
+  "blauwe-bes": {
+   "name": "blauwe bes"
+  },
+  "braam": {
+   "name": "braam"
+  },
+  "druif": {
+   "name": "druif"
+  },
+  "framboos": {
+   "name": "framboos"
+  },
+  "kers": {
+   "name": "kers"
+  },
+  "kiwibes": {
+   "name": "kiwibes"
+  },
+  "kweepeer": {
+   "name": "kweepeer"
+  },
+  "meloen": {
+   "name": "meloen"
+  },
+  "nectarine": {
+   "name": "nectarine"
+  },
+  "peer": {
+   "name": "peer"
+  },
+  "perzik": {
+   "name": "perzik"
+  },
+  "pruim": {
+   "name": "pruim"
+  },
+  "rode-bes": {
+   "name": "rode bes"
+  },
+  "vijg": {
+   "name": "vijg"
+  },
+  "zwarte-bes": {
+   "name": "zwarte bes"
+  }
+ }
+}

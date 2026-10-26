@@ -1,0 +1,78 @@
+{
+ "id": "cf62a968-068a-4620-8d51-daf87294a5c4",
+ "userId": "617a2f4c-b061-4a2e-bcd0-c0035397930f",
+ "householdId": "2c10d44f-a74a-4e76-9b42-05c2dc51541f",
+ "groupId": "2dc70085-dcd6-473f-9628-9cd64f46d6a5",
+ "name": "Lege schotel",
+ "slug": "lege-schotel",
+ "image": null,
+ "recipeServings": 0.0,
+ "recipeYieldQuantity": 0.0,
+ "recipeYield": null,
+ "totalTime": null,
+ "prepTime": null,
+ "cookTime": null,
+ "performTime": null,
+ "totalTimeSeconds": null,
+ "prepTimeSeconds": null,
+ "performTimeSeconds": null,
+ "description": "",
+ "recipeCategory": [],
+ "tags": [],
+ "tools": [],
+ "rating": null,
+ "orgURL": null,
+ "dateAdded": "2026-10-26",
+ "dateUpdated": "2026-10-26T10:40:43.461894Z",
+ "createdAt": "2026-10-26T10:40:43.429468Z",
+ "updatedAt": "2026-10-26T10:40:43.462373Z",
+ "recipeIngredient": [
+  {
+   "quantity": 1.0,
+   "unit": null,
+   "food": null,
+   "referencedRecipe": null,
+   "note": "zout",
+   "display": "1 zout",
+   "title": null,
+   "originalText": null,
+   "substitutions": [],
+   "referenceId": "73e8cada-a4c2-49c4-ad78-ae4bcaf53079"
+  }
+ ],
+ "recipeInstructions": [
+  {
+   "id": "ecf75912-7205-49b9-984b-0e9ea3117c5a",
+   "title": "",
+   "summary": "",
+   "text": "Recipe steps as well as other fields in the recipe page support markdown syntax.\n\n**Add a link**\n\n[My Link](https://demo.mealie.io)\n",
+   "ingredientReferences": [],
+   "noteReferences": []
+  }
+ ],
+ "nutrition": {
+  "calories": null,
+  "carbohydrateContent": null,
+  "cholesterolContent": null,
+  "fatContent": null,
+  "fiberContent": null,
+  "proteinContent": null,
+  "saturatedFatContent": null,
+  "sodiumContent": null,
+  "sugarContent": null,
+  "transFatContent": null,
+  "unsaturatedFatContent": null
+ },
+ "settings": {
+  "public": false,
+  "showNutrition": false,
+  "showAssets": false,
+  "landscapeView": false,
+  "disableComments": false,
+  "locked": false
+ },
+ "assets": [],
+ "notes": [],
+ "extras": {},
+ "comments": []
+}

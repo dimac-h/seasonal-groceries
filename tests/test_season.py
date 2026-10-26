@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 
+from custom_components.seasonal_groceries.const import Language
 from custom_components.seasonal_groceries.dataset import Dataset, Item, load_dataset
 from custom_components.seasonal_groceries.season import band_for, rows
 
@@ -13,16 +14,16 @@ def _item(
 ) -> Item:
     return Item(
         key=key,
-        names={"nl": key, "en": key},
+        name=key,
         type=produce_type,  # type: ignore[arg-type]
         months=frozenset(months),
         residues=residues,
-        aliases={},
+        aliases=(),
     )
 
 
 def _dataset(*items: Item) -> Dataset:
-    real = load_dataset()
+    real = load_dataset(Language.EN)
     return Dataset(
         items=tuple(items),
         cutoffs=real.cutoffs,
@@ -31,7 +32,7 @@ def _dataset(*items: Item) -> Dataset:
     )
 
 
-CUTOFFS = load_dataset().cutoffs
+CUTOFFS = load_dataset(Language.EN).cutoffs
 
 
 @pytest.mark.parametrize(
@@ -116,7 +117,7 @@ def test_only_in_season_excludes_others() -> None:
 
 
 def test_real_dataset_october_vegetables_start_with_green_in_season() -> None:
-    result = rows(load_dataset(), "vegetable", 10, only_in_season=True)
+    result = rows(load_dataset(Language.EN), "vegetable", 10, only_in_season=True)
     assert result
     assert result[0].band == "green"
     known = [r.item.residues for r in result if r.item.residues is not None]

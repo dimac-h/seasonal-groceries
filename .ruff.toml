@@ -32,6 +32,8 @@ max-complexity = 25
     "D103", # test function names already say what they check
     "PLR2004", # magic numbers are the expected values in assertions
     "D104", # tests/__init__.py is an empty marker file
+    "S105", # fake tokens in tests
+    "S106", # fake tokens in tests
 ]
 
 "custom_components/*/__init__.py" = [
