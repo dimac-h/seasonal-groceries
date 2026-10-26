@@ -6,7 +6,7 @@
   "dependencies": ["frontend", "http"],
   "documentation": "https://github.com/dimac-h/seasonal-groceries",
   "integration_type": "service",
-  "iot_class": "cloud_polling",
+  "iot_class": "local_polling",
   "issue_tracker": "https://github.com/dimac-h/seasonal-groceries/issues",
   "quality_scale": "bronze",
   "requirements": [],

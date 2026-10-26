@@ -1,0 +1,1348 @@
+{
+ "schema_version": 1,
+ "data_as_of": "2026-10",
+ "credits": {
+  "calendar": {
+   "label": "Groente- en fruitkalender (seasonal calendar)",
+   "organisations": [
+    "Voedingscentrum",
+    "Velt",
+    "Bionext"
+   ],
+   "url": "https://www.voedingscentrum.nl/Assets/Uploads/voedingscentrum/Documents/Consumenten/Veelgestelde%20vragen/Voedingscentrum%20seizoengroente-%20en%20fruitkalender.pdf",
+   "note": "Compiled on the basis of information from Velt, supplemented with insights from Bionext and the Voedingscentrum."
+  },
+  "pesticides": {
+   "label": "Groente en fruit van het seizoen: lekkerder met minder pesticiden",
+   "organisations": [
+    "Pesticide Action Network Netherlands (PAN Netherlands)",
+    "NVWA"
+   ],
+   "url": "https://www.pan-netherlands.org/eetwijzer/v-h-seizoen/",
+   "note": "Average number of pesticide residues per item, from NVWA tests in 2021-2023. Items with fewer than 10 tests are not scored (shown as unknown)."
+  }
+ },
+ "cutoffs": {
+  "vegetable": {
+   "green_max": 0.4,
+   "orange_max": 1.8,
+   "provisional": false
+  },
+  "fruit": {
+   "green_max": 1.8,
+   "orange_max": 3.0,
+   "provisional": true
+  }
+ },
+ "items": [
+  {
+   "key": "aardpeer",
+   "names": {
+    "nl": "aardpeer",
+    "en": "Jerusalem artichoke"
+   },
+   "type": "vegetable",
+   "months": [
+    1,
+    11,
+    12
+   ],
+   "residues": null
+  },
+  {
+   "key": "andijvie",
+   "names": {
+    "nl": "andijvie",
+    "en": "endive"
+   },
+   "type": "vegetable",
+   "months": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "residues": 1.7,
+   "aliases": {
+    "en": [
+     "curly endive"
+    ]
+   }
+  },
+  {
+   "key": "artisjok",
+   "names": {
+    "nl": "artisjok",
+    "en": "artichoke"
+   },
+   "type": "vegetable",
+   "months": [
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "residues": null
+  },
+  {
+   "key": "asperge",
+   "names": {
+    "nl": "asperge",
+    "en": "asparagus"
+   },
+   "type": "vegetable",
+   "months": [
+    4,
+    5,
+    6
+   ],
+   "residues": 0
+  },
+  {
+   "key": "aubergine",
+   "names": {
+    "nl": "aubergine",
+    "en": "aubergine"
+   },
+   "type": "vegetable",
+   "months": [
+    7,
+    8,
+    9,
+    10
+   ],
+   "residues": 0.5,
+   "aliases": {
+    "en": [
+     "eggplant"
+    ]
+   }
+  },
+  {
+   "key": "bleekselderij",
+   "names": {
+    "nl": "bleekselderij",
+    "en": "celery"
+   },
+   "type": "vegetable",
+   "months": [
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "residues": 1.7,
+   "aliases": {
+    "en": [
+     "celery stalks"
+    ]
+   }
+  },
+  {
+   "key": "bloemkool",
+   "names": {
+    "nl": "bloemkool",
+    "en": "cauliflower"
+   },
+   "type": "vegetable",
+   "months": [
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "residues": 0.5
+  },
+  {
+   "key": "boerenkool",
+   "names": {
+    "nl": "boerenkool",
+    "en": "kale"
+   },
+   "type": "vegetable",
+   "months": [
+    1,
+    2,
+    3,
+    10,
+    11,
+    12
+   ],
+   "residues": 1,
+   "aliases": {
+    "en": [
+     "curly kale"
+    ]
+   }
+  },
+  {
+   "key": "broccoli",
+   "names": {
+    "nl": "broccoli",
+    "en": "broccoli"
+   },
+   "type": "vegetable",
+   "months": [
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "residues": 1.3
+  },
+  {
+   "key": "chinese-kool",
+   "names": {
+    "nl": "Chinese kool",
+    "en": "Chinese cabbage"
+   },
+   "type": "vegetable",
+   "months": [
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "residues": 0.7,
+   "aliases": {
+    "nl": [
+     "chinese kool"
+    ]
+   }
+  },
+  {
+   "key": "courgette",
+   "names": {
+    "nl": "courgette",
+    "en": "courgette"
+   },
+   "type": "vegetable",
+   "months": [
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "residues": 0.4,
+   "aliases": {
+    "en": [
+     "zucchini"
+    ]
+   }
+  },
+  {
+   "key": "doperwt",
+   "names": {
+    "nl": "doperwt",
+    "en": "garden pea"
+   },
+   "type": "vegetable",
+   "months": [
+    5,
+    6,
+    7
+   ],
+   "residues": null
+  },
+  {
+   "key": "groene-selderij",
+   "names": {
+    "nl": "groene selderij",
+    "en": "celery leaves"
+   },
+   "type": "vegetable",
+   "months": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "residues": null
+  },
+  {
+   "key": "knolselderij",
+   "names": {
+    "nl": "knolselderij",
+    "en": "celeriac"
+   },
+   "type": "vegetable",
+   "months": [
+    1,
+    2,
+    3,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "residues": 1.1
+  },
+  {
+   "key": "komkommer",
+   "names": {
+    "nl": "komkommer",
+    "en": "cucumber"
+   },
+   "type": "vegetable",
+   "months": [
+    7,
+    8,
+    9,
+    10
+   ],
+   "residues": 1.6
+  },
+  {
+   "key": "koolraap",
+   "names": {
+    "nl": "koolraap",
+    "en": "swede"
+   },
+   "type": "vegetable",
+   "months": [
+    1,
+    11,
+    12
+   ],
+   "residues": null,
+   "aliases": {
+    "en": [
+     "rutabaga"
+    ]
+   }
+  },
+  {
+   "key": "koolrabi",
+   "names": {
+    "nl": "koolrabi",
+    "en": "kohlrabi"
+   },
+   "type": "vegetable",
+   "months": [
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "residues": null
+  },
+  {
+   "key": "kropsla",
+   "names": {
+    "nl": "kropsla",
+    "en": "lettuce"
+   },
+   "type": "vegetable",
+   "months": [
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "residues": 3.6,
+   "aliases": {
+    "nl": [
+     "sla"
+    ],
+    "en": [
+     "lettuce",
+     "butterhead"
+    ]
+   }
+  },
+  {
+   "key": "mais",
+   "names": {
+    "nl": "mais",
+    "en": "sweetcorn"
+   },
+   "type": "vegetable",
+   "months": [
+    8,
+    9
+   ],
+   "residues": null,
+   "aliases": {
+    "en": [
+     "corn",
+     "sweet corn"
+    ]
+   }
+  },
+  {
+   "key": "meiraap",
+   "names": {
+    "nl": "meiraap",
+    "en": "spring turnip"
+   },
+   "type": "vegetable",
+   "months": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+   ],
+   "residues": null
+  },
+  {
+   "key": "paddenstoelen",
+   "names": {
+    "nl": "paddenstoelen",
+    "en": "mushrooms"
+   },
+   "type": "vegetable",
+   "months": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "residues": null,
+   "aliases": {
+    "nl": [
+     "champignon",
+     "champignons"
+    ],
+    "en": [
+     "mushroom"
+    ]
+   }
+  },
+  {
+   "key": "paksoi",
+   "names": {
+    "nl": "paksoi",
+    "en": "pak choi"
+   },
+   "type": "vegetable",
+   "months": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "residues": 1.9
+  },
+  {
+   "key": "paprika",
+   "names": {
+    "nl": "paprika",
+    "en": "bell pepper"
+   },
+   "type": "vegetable",
+   "months": [
+    7,
+    8,
+    9,
+    10
+   ],
+   "residues": 1.2,
+   "aliases": {
+    "nl": [
+     "paprika's"
+    ],
+    "en": [
+     "pepper",
+     "peppers"
+    ]
+   }
+  },
+  {
+   "key": "pastinaak",
+   "names": {
+    "nl": "pastinaak",
+    "en": "parsnip"
+   },
+   "type": "vegetable",
+   "months": [
+    1,
+    2,
+    3,
+    10,
+    11,
+    12
+   ],
+   "residues": null
+  },
+  {
+   "key": "peultjes",
+   "names": {
+    "nl": "peultjes",
+    "en": "snow peas"
+   },
+   "type": "vegetable",
+   "months": [
+    5,
+    6,
+    7
+   ],
+   "residues": null,
+   "aliases": {
+    "en": [
+     "mangetout"
+    ]
+   }
+  },
+  {
+   "key": "pompoen",
+   "names": {
+    "nl": "pompoen",
+    "en": "pumpkin"
+   },
+   "type": "vegetable",
+   "months": [
+    1,
+    2,
+    3,
+    4,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "residues": 0.4
+  },
+  {
+   "key": "prei",
+   "names": {
+    "nl": "prei",
+    "en": "leek"
+   },
+   "type": "vegetable",
+   "months": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "residues": 1.8
+  },
+  {
+   "key": "raap",
+   "names": {
+    "nl": "raap",
+    "en": "turnip"
+   },
+   "type": "vegetable",
+   "months": [
+    11,
+    12
+   ],
+   "residues": null
+  },
+  {
+   "key": "raapsteel",
+   "names": {
+    "nl": "raapsteel",
+    "en": "turnip greens"
+   },
+   "type": "vegetable",
+   "months": [
+    3,
+    4,
+    5,
+    8,
+    9,
+    10
+   ],
+   "residues": null
+  },
+  {
+   "key": "rabarber",
+   "names": {
+    "nl": "rabarber",
+    "en": "rhubarb"
+   },
+   "type": "vegetable",
+   "months": [
+    3,
+    4,
+    5,
+    6,
+    7
+   ],
+   "residues": null
+  },
+  {
+   "key": "radijs",
+   "names": {
+    "nl": "radijs",
+    "en": "radish"
+   },
+   "type": "vegetable",
+   "months": [
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "residues": null
+  },
+  {
+   "key": "rammenas",
+   "names": {
+    "nl": "rammenas",
+    "en": "black radish"
+   },
+   "type": "vegetable",
+   "months": [
+    1,
+    2,
+    3,
+    9,
+    10,
+    11,
+    12
+   ],
+   "residues": null
+  },
+  {
+   "key": "rode-biet",
+   "names": {
+    "nl": "rode biet",
+    "en": "beetroot"
+   },
+   "type": "vegetable",
+   "months": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "residues": 0.1,
+   "aliases": {
+    "nl": [
+     "bieten",
+     "bietjes"
+    ]
+   }
+  },
+  {
+   "key": "rodekool",
+   "names": {
+    "nl": "rodekool",
+    "en": "red cabbage"
+   },
+   "type": "vegetable",
+   "months": [
+    1,
+    2,
+    3,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "residues": 0.3,
+   "aliases": {
+    "nl": [
+     "rode kool"
+    ],
+    "en": [
+     "red cabbage"
+    ]
+   }
+  },
+  {
+   "key": "roodlof",
+   "names": {
+    "nl": "roodlof",
+    "en": "radicchio"
+   },
+   "type": "vegetable",
+   "months": [
+    3,
+    4,
+    5,
+    10
+   ],
+   "residues": null
+  },
+  {
+   "key": "savooikool",
+   "names": {
+    "nl": "savooikool",
+    "en": "savoy cabbage"
+   },
+   "type": "vegetable",
+   "months": [
+    1,
+    2,
+    3,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "residues": null
+  },
+  {
+   "key": "schorseneer",
+   "names": {
+    "nl": "schorseneer",
+    "en": "black salsify"
+   },
+   "type": "vegetable",
+   "months": [
+    1,
+    2,
+    3,
+    9,
+    10,
+    11,
+    12
+   ],
+   "residues": null
+  },
+  {
+   "key": "snijbiet",
+   "names": {
+    "nl": "snijbiet",
+    "en": "Swiss chard"
+   },
+   "type": "vegetable",
+   "months": [
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "residues": null,
+   "aliases": {
+    "en": [
+     "chard"
+    ]
+   }
+  },
+  {
+   "key": "snijboon",
+   "names": {
+    "nl": "snijboon",
+    "en": "runner bean"
+   },
+   "type": "vegetable",
+   "months": [
+    7,
+    8,
+    9,
+    10
+   ],
+   "residues": null
+  },
+  {
+   "key": "sperzieboon",
+   "names": {
+    "nl": "sperzieboon",
+    "en": "green bean"
+   },
+   "type": "vegetable",
+   "months": [
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "residues": 0.8,
+   "aliases": {
+    "nl": [
+     "princesseboon",
+     "boontjes"
+    ]
+   }
+  },
+  {
+   "key": "spinazie",
+   "names": {
+    "nl": "spinazie",
+    "en": "spinach"
+   },
+   "type": "vegetable",
+   "months": [
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "residues": 1.2
+  },
+  {
+   "key": "spitskool",
+   "names": {
+    "nl": "spitskool",
+    "en": "pointed cabbage"
+   },
+   "type": "vegetable",
+   "months": [
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "residues": 0.6
+  },
+  {
+   "key": "spruiten",
+   "names": {
+    "nl": "spruiten",
+    "en": "Brussels sprouts"
+   },
+   "type": "vegetable",
+   "months": [
+    1,
+    2,
+    3,
+    10,
+    11,
+    12
+   ],
+   "residues": 1.9,
+   "aliases": {
+    "nl": [
+     "spruitjes"
+    ]
+   }
+  },
+  {
+   "key": "tomaat",
+   "names": {
+    "nl": "tomaat",
+    "en": "tomato"
+   },
+   "type": "vegetable",
+   "months": [
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "residues": 1.1
+  },
+  {
+   "key": "tuinboon",
+   "names": {
+    "nl": "tuinboon",
+    "en": "broad bean"
+   },
+   "type": "vegetable",
+   "months": [
+    6,
+    7
+   ],
+   "residues": null
+  },
+  {
+   "key": "ui",
+   "names": {
+    "nl": "ui",
+    "en": "onion"
+   },
+   "type": "vegetable",
+   "months": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "residues": 1.7
+  },
+  {
+   "key": "veldsla",
+   "names": {
+    "nl": "veldsla",
+    "en": "lamb's lettuce"
+   },
+   "type": "vegetable",
+   "months": [
+    1,
+    2,
+    3,
+    10,
+    11,
+    12
+   ],
+   "residues": null
+  },
+  {
+   "key": "venkel",
+   "names": {
+    "nl": "venkel",
+    "en": "fennel"
+   },
+   "type": "vegetable",
+   "months": [
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "residues": null
+  },
+  {
+   "key": "waterkers",
+   "names": {
+    "nl": "waterkers",
+    "en": "watercress"
+   },
+   "type": "vegetable",
+   "months": [
+    1,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "residues": null
+  },
+  {
+   "key": "winterpostelein",
+   "names": {
+    "nl": "winterpostelein",
+    "en": "winter purslane"
+   },
+   "type": "vegetable",
+   "months": [
+    1,
+    2,
+    3,
+    10,
+    11,
+    12
+   ],
+   "residues": null
+  },
+  {
+   "key": "witlof",
+   "names": {
+    "nl": "witlof",
+    "en": "chicory"
+   },
+   "type": "vegetable",
+   "months": [
+    1,
+    2,
+    3,
+    4,
+    10,
+    11,
+    12
+   ],
+   "residues": 0.1,
+   "aliases": {
+    "en": [
+     "endive",
+     "belgian endive"
+    ]
+   }
+  },
+  {
+   "key": "witte-kool",
+   "names": {
+    "nl": "witte kool",
+    "en": "white cabbage"
+   },
+   "type": "vegetable",
+   "months": [
+    1,
+    2,
+    3,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "residues": 1.3
+  },
+  {
+   "key": "wortel",
+   "names": {
+    "nl": "wortel",
+    "en": "carrot"
+   },
+   "type": "vegetable",
+   "months": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "residues": 1.6
+  },
+  {
+   "key": "aardbei",
+   "names": {
+    "nl": "aardbei",
+    "en": "strawberry"
+   },
+   "type": "fruit",
+   "months": [
+    4,
+    5,
+    6,
+    7,
+    8
+   ],
+   "residues": 3.9
+  },
+  {
+   "key": "abrikoos",
+   "names": {
+    "nl": "abrikoos",
+    "en": "apricot"
+   },
+   "type": "fruit",
+   "months": [
+    6,
+    7,
+    8
+   ],
+   "residues": 2.8
+  },
+  {
+   "key": "appel",
+   "names": {
+    "nl": "appel",
+    "en": "apple"
+   },
+   "type": "fruit",
+   "months": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "residues": 3.4
+  },
+  {
+   "key": "blauwe-bes",
+   "names": {
+    "nl": "blauwe bes",
+    "en": "blueberry"
+   },
+   "type": "fruit",
+   "months": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "residues": 2
+  },
+  {
+   "key": "braam",
+   "names": {
+    "nl": "braam",
+    "en": "blackberry"
+   },
+   "type": "fruit",
+   "months": [
+    7,
+    8,
+    9,
+    10
+   ],
+   "residues": null
+  },
+  {
+   "key": "druif",
+   "names": {
+    "nl": "druif",
+    "en": "grape"
+   },
+   "type": "fruit",
+   "months": [
+    8,
+    9,
+    10,
+    11
+   ],
+   "residues": 3.4
+  },
+  {
+   "key": "framboos",
+   "names": {
+    "nl": "framboos",
+    "en": "raspberry"
+   },
+   "type": "fruit",
+   "months": [
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "residues": 2.6
+  },
+  {
+   "key": "kers",
+   "names": {
+    "nl": "kers",
+    "en": "cherry"
+   },
+   "type": "fruit",
+   "months": [
+    6,
+    7,
+    8
+   ],
+   "residues": 3.5
+  },
+  {
+   "key": "kiwibes",
+   "names": {
+    "nl": "kiwibes",
+    "en": "kiwi berry"
+   },
+   "type": "fruit",
+   "months": [
+    9,
+    10
+   ],
+   "residues": null
+  },
+  {
+   "key": "kweepeer",
+   "names": {
+    "nl": "kweepeer",
+    "en": "quince"
+   },
+   "type": "fruit",
+   "months": [
+    9,
+    10
+   ],
+   "residues": null
+  },
+  {
+   "key": "meloen",
+   "names": {
+    "nl": "meloen",
+    "en": "melon"
+   },
+   "type": "fruit",
+   "months": [
+    8,
+    9,
+    10,
+    11
+   ],
+   "residues": 1.8
+  },
+  {
+   "key": "nectarine",
+   "names": {
+    "nl": "nectarine",
+    "en": "nectarine"
+   },
+   "type": "fruit",
+   "months": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "residues": 2.5
+  },
+  {
+   "key": "peer",
+   "names": {
+    "nl": "peer",
+    "en": "pear"
+   },
+   "type": "fruit",
+   "months": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "residues": 3.3
+  },
+  {
+   "key": "perzik",
+   "names": {
+    "nl": "perzik",
+    "en": "peach"
+   },
+   "type": "fruit",
+   "months": [
+    6,
+    7,
+    8,
+    9
+   ],
+   "residues": 2.5
+  },
+  {
+   "key": "pruim",
+   "names": {
+    "nl": "pruim",
+    "en": "plum"
+   },
+   "type": "fruit",
+   "months": [
+    8,
+    9
+   ],
+   "residues": 1.8
+  },
+  {
+   "key": "rode-bes",
+   "names": {
+    "nl": "rode bes",
+    "en": "redcurrant"
+   },
+   "type": "fruit",
+   "months": [
+    6,
+    7
+   ],
+   "residues": null
+  },
+  {
+   "key": "vijg",
+   "names": {
+    "nl": "vijg",
+    "en": "fig"
+   },
+   "type": "fruit",
+   "months": [
+    8,
+    9
+   ],
+   "residues": null
+  },
+  {
+   "key": "zwarte-bes",
+   "names": {
+    "nl": "zwarte bes",
+    "en": "blackcurrant"
+   },
+   "type": "fruit",
+   "months": [
+    6,
+    7,
+    8
+   ],
+   "residues": null
+  }
+ ]
+}
