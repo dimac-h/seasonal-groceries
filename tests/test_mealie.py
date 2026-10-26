@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import re
+from dataclasses import replace
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -257,3 +259,87 @@ async def test_removed_core_entry_is_unavailable(hass: HomeAssistant) -> None:
 
     with pytest.raises(MealieConnectionError):
         credentials_for(hass, mealie)
+
+
+async def test_missing_recipe_detail_is_skipped(
+    hass: HomeAssistant, aioclient_mock: AiohttpClientMocker
+) -> None:
+    listing = _fixture("mealie_recipes_list.json")
+    aioclient_mock.get(f"{URL}/api/recipes", json=listing)
+    gone = listing["items"][0]["slug"]
+    for item in listing["items"]:
+        if item["slug"] == gone:
+            aioclient_mock.get(f"{URL}/api/recipes/{gone}", status=404)
+        else:
+            aioclient_mock.get(
+                f"{URL}/api/recipes/{item['slug']}",
+                json=_fixture(f"mealie_recipe_{item['slug']}.json"),
+            )
+
+    recipes = await _client(hass).get_recipes()
+
+    assert gone not in {r.slug for r in recipes}
+    assert len(recipes) == len(listing["items"]) - 1
+
+
+async def test_detail_server_error_still_fails(
+    hass: HomeAssistant, aioclient_mock: AiohttpClientMocker
+) -> None:
+    listing = _fixture("mealie_recipes_list.json")
+    aioclient_mock.get(f"{URL}/api/recipes", json=listing)
+    aioclient_mock.get(re.compile(rf"{URL}/api/recipes/.+"), status=500)
+
+    with pytest.raises(MealieConnectionError):
+        await _client(hass).get_recipes()
+
+
+async def test_unchanged_recipes_are_not_fetched_again(
+    hass: HomeAssistant, aioclient_mock: AiohttpClientMocker
+) -> None:
+    _mock_recipes(aioclient_mock)
+    first = await _client(hass).get_recipes()
+    aioclient_mock.clear_requests()
+    _mock_recipes(aioclient_mock)
+
+    second = await _client(hass).get_recipes(first)
+
+    assert second == first
+    detail_calls = [
+        c for c in aioclient_mock.mock_calls if "/api/recipes/" in str(c[1])
+    ]
+    assert detail_calls == []
+
+
+async def test_changed_recipe_is_fetched_again(
+    hass: HomeAssistant, aioclient_mock: AiohttpClientMocker
+) -> None:
+    _mock_recipes(aioclient_mock)
+    first = await _client(hass).get_recipes()
+    stale = [replace(r, updated="older") for r in first]
+    aioclient_mock.clear_requests()
+    _mock_recipes(aioclient_mock)
+
+    await _client(hass).get_recipes(stale)
+
+    detail_calls = [
+        c for c in aioclient_mock.mock_calls if "/api/recipes/" in str(c[1])
+    ]
+    assert len(detail_calls) == len(first)
+
+
+async def test_malformed_response_is_a_connection_error(
+    hass: HomeAssistant, aioclient_mock: AiohttpClientMocker
+) -> None:
+    aioclient_mock.get(f"{URL}/api/foods", json={"unexpected": True})
+
+    with pytest.raises(MealieConnectionError):
+        await _client(hass).get_foods()
+
+
+async def test_non_json_response_is_a_connection_error(
+    hass: HomeAssistant, aioclient_mock: AiohttpClientMocker
+) -> None:
+    aioclient_mock.get(f"{URL}/api/foods", text="<html>proxy error</html>")
+
+    with pytest.raises(MealieConnectionError):
+        await _client(hass).get_foods()

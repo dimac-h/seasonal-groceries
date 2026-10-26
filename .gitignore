@@ -30,3 +30,5 @@ docs/
 
 # Local assistant configuration
 .claude/
+.coverage
+htmlcov/

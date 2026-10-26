@@ -12,7 +12,7 @@ from homeassistant.components.http import StaticPathConfig
 from homeassistant.helpers import config_validation as cv
 
 from .const import CARD_MODULE_URL, DOMAIN, FRONTEND_PATH
-from .coordinator import EVENT_UPDATED, SeasonalGroceriesCoordinator
+from .coordinator import SeasonalGroceriesCoordinator
 from .corrections import CorrectionsStore
 from .websocket_api import async_register_commands
 
@@ -63,10 +63,9 @@ async def async_setup_entry(
     coordinator = SeasonalGroceriesCoordinator(hass, entry, corrections)
     await coordinator.async_refresh()
     entry.runtime_data = coordinator
-    # A listener is also what keeps the coordinator's periodic refresh running.
-    entry.async_on_unload(
-        coordinator.async_add_listener(lambda: hass.bus.async_fire(EVENT_UPDATED))
-    )
+    # A coordinator only polls while it has a listener; the cards add their own via
+    # the subscribe command, this one keeps the data fresh when no dashboard is open.
+    entry.async_on_unload(coordinator.async_add_listener(lambda: None))
     coordinator.async_start_month_listener()
     entry.async_on_unload(coordinator.async_stop_month_listener)
     return True

@@ -80,3 +80,18 @@ async def test_add_rejection_keeps_an_existing_choice(hass: HomeAssistant) -> No
     assert store.get("food:abc") == Correction(
         status="item", item_key="appel", confirmed=True, rejected=["peer"]
     )
+
+
+def test_key_ignores_the_quantity() -> None:
+    a = MealieIngredient(food_id=None, text="400 g tomaten")
+    b = MealieIngredient(food_id=None, text="500 g Tomaten")
+
+    assert ingredient_key(a) == ingredient_key(b) == "text:tomaten"
+
+
+def test_keys_of_non_latin_text_do_not_collide() -> None:
+    tofu = ingredient_key(MealieIngredient(food_id=None, text="豆腐"))
+    miso = ingredient_key(MealieIngredient(food_id=None, text="味噌"))
+
+    assert tofu != miso
+    assert tofu != "text:"

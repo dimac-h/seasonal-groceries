@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any
 import voluptuous as vol
 from homeassistant.components import websocket_api
 from homeassistant.config_entries import ConfigEntryState
+from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
 
 from .const import DOMAIN
@@ -49,10 +50,8 @@ def _with_coordinator(handler: Any) -> Any:
 
 
 def _mealie_status(coordinator: SeasonalGroceriesCoordinator) -> dict[str, bool]:
-    data = coordinator.data
     return {
-        "mealie_configured": bool(data and data.mealie_configured)
-        or coordinator.settings.get("mealie", {}).get("mode", "none") != "none",
+        "mealie_configured": coordinator.mealie_configured,
         "mealie_ok": coordinator.last_update_success,
     }
 
@@ -175,6 +174,24 @@ async def ws_review_queue(
     )
 
 
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/subscribe"})
+@websocket_api.async_response
+@_with_coordinator
+async def ws_subscribe(
+    connection: Any,
+    msg: dict[str, Any],
+    coordinator: SeasonalGroceriesCoordinator,
+) -> None:
+    """Tell the card whenever the data changed (open to every user)."""
+
+    @callback
+    def forward() -> None:
+        connection.send_message(websocket_api.event_message(msg["id"], {}))
+
+    connection.subscriptions[msg["id"]] = coordinator.async_add_listener(forward)
+    connection.send_result(msg["id"])
+
+
 @websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/item_options"})
 @websocket_api.async_response
 @_with_coordinator
@@ -221,6 +238,7 @@ def async_register_commands(hass: HomeAssistant) -> None:
         ws_recipes,
         ws_review_queue,
         ws_item_options,
+        ws_subscribe,
         ws_review_resolve,
     ):
         websocket_api.async_register_command(hass, command)

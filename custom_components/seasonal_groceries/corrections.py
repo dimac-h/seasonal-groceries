@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Literal
 from homeassistant.helpers.storage import Store
 
 from .const import DOMAIN
-from .matching import normalise
+from .matching import normalise, strip_quantity
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -40,7 +40,9 @@ def ingredient_key(ingredient: MealieIngredient) -> str:
     """Stable key: the Mealie food when linked, else the normalised text."""
     if ingredient.food_id:
         return f"food:{ingredient.food_id}"
-    return f"text:{normalise(ingredient.text)}"
+    text = strip_quantity(ingredient.text)
+    # Text without Latin letters normalises to "": keep it distinguishable.
+    return f"text:{normalise(text) or text.strip().casefold()}"
 
 
 class CorrectionsStore:

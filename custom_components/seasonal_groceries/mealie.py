@@ -12,7 +12,7 @@ from homeassistant.const import CONF_API_TOKEN, CONF_HOST, CONF_VERIFY_SSL
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Mapping, Sequence
 
     from aiohttp import ClientSession
     from homeassistant.config_entries import ConfigEntry
@@ -28,6 +28,7 @@ _DETAIL_CONCURRENCY = 5
 _TIMEOUT = ClientTimeout(total=30)
 _HTTP_UNAUTHORIZED = 401
 _HTTP_FORBIDDEN = 403
+_HTTP_NOT_FOUND = 404
 _HTTP_ERROR = 400
 
 
@@ -41,6 +42,10 @@ class MealieAuthError(MealieError):
 
 class MealieConnectionError(MealieError):
     """Mealie could not be reached or answered with an error."""
+
+
+class MealieNotFoundError(MealieConnectionError):
+    """The requested item does not exist (any more)."""
 
 
 @dataclass(frozen=True)
@@ -67,6 +72,7 @@ class MealieRecipe:
     slug: str
     name: str
     ingredients: tuple[MealieIngredient, ...]
+    updated: str = ""
 
 
 @dataclass(frozen=True)
@@ -114,11 +120,13 @@ class MealieClient:
             ) as response:
                 if response.status in (_HTTP_UNAUTHORIZED, _HTTP_FORBIDDEN):
                     raise MealieAuthError(path)
+                if response.status == _HTTP_NOT_FOUND:
+                    raise MealieNotFoundError(path)
                 if response.status >= _HTTP_ERROR:
                     msg = f"{path}: HTTP {response.status}"
                     raise MealieConnectionError(msg)
                 return await response.json()
-        except (ClientError, TimeoutError) as err:
+        except (ClientError, TimeoutError, ValueError) as err:
             msg = f"{path}: {err}"
             raise MealieConnectionError(msg) from err
 
@@ -129,6 +137,9 @@ class MealieClient:
             body = await self._request(
                 "GET", path, params={"page": page, "perPage": _PAGE_SIZE}
             )
+            if not isinstance(body, dict) or not isinstance(body.get("items"), list):
+                msg = f"{path}: unexpected response"
+                raise MealieConnectionError(msg)
             items.extend(body["items"])
             if page >= body.get("total_pages", 1):
                 return items
@@ -149,18 +160,31 @@ class MealieClient:
             for raw in await self._paged("/api/foods")
         ]
 
-    async def get_recipes(self) -> list[MealieRecipe]:
-        """Return all recipes with ingredients (one detail request per recipe)."""
+    async def get_recipes(
+        self, cached: Sequence[MealieRecipe] = ()
+    ) -> list[MealieRecipe]:
+        """
+        Return all recipes with ingredients.
+
+        Details are fetched per recipe, but a recipe whose `dateUpdated` matches the
+        one in `cached` is reused. A recipe deleted meanwhile is skipped.
+        """
+        known = {recipe.slug: recipe for recipe in cached}
         summaries = await self._paged("/api/recipes")
         semaphore = asyncio.Semaphore(_DETAIL_CONCURRENCY)
 
-        async def detail(slug: str) -> Mapping[str, Any]:
+        async def detail(summary: Mapping[str, Any]) -> MealieRecipe | None:
+            slug = summary["slug"]
+            stamp = str(summary.get("dateUpdated") or summary.get("updatedAt") or "")
+            previous = known.get(slug)
+            if previous is not None and stamp and previous.updated == stamp:
+                return previous
             async with semaphore:
-                return await self._request("GET", f"/api/recipes/{slug}")
-
-        details = await asyncio.gather(*(detail(s["slug"]) for s in summaries))
-        return [
-            MealieRecipe(
+                try:
+                    raw = await self._request("GET", f"/api/recipes/{slug}")
+                except MealieNotFoundError:
+                    return None
+            return MealieRecipe(
                 slug=raw["slug"],
                 name=raw["name"],
                 ingredients=tuple(
@@ -168,9 +192,15 @@ class MealieClient:
                     for entry in raw.get("recipeIngredient", [])
                     if (ingredient := _parse_ingredient(entry)) is not None
                 ),
+                updated=stamp,
             )
-            for raw in details
-        ]
+
+        try:
+            results = await asyncio.gather(*(detail(s) for s in summaries))
+        except (KeyError, TypeError) as err:
+            msg = f"unexpected recipe data: {err}"
+            raise MealieConnectionError(msg) from err
+        return [recipe for recipe in results if recipe is not None]
 
     async def add_food_alias(self, food_id: str, alias: str) -> None:
         """Add `alias` to a Mealie food unless it is already known."""

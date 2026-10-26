@@ -22,6 +22,7 @@ export abstract class SeasonalCard extends LitElement {
 
   private _unsubscribe?: () => void;
   private _starting = false;
+  private _liveUpdatesUnavailable = false;
 
   /** Fetch whatever the card shows into its own state. Throw on failure. */
   protected abstract load(): Promise<void>;
@@ -55,15 +56,19 @@ export abstract class SeasonalCard extends LitElement {
   }
 
   private async _start(): Promise<void> {
-    if (this._unsubscribe || this._starting) return;
+    if (this._unsubscribe || this._starting || this._liveUpdatesUnavailable) return;
     this._starting = true;
     try {
       await this._refresh();
-      const unsubscribe = await subscribeUpdates(this.hass, () => void this._refresh());
-      if (this.isConnected) this._unsubscribe = unsubscribe;
-      else unsubscribe(); // removed from the DOM while subscribing
-    } catch {
-      this._failed = true;
+      try {
+        const unsubscribe = await subscribeUpdates(this.hass, () => void this._refresh());
+        if (this.isConnected) this._unsubscribe = unsubscribe;
+        else unsubscribe(); // removed from the DOM while subscribing
+      } catch {
+        // The data is already shown; without live updates it just refreshes on reload.
+        // Remember, so a failing subscription is not retried on every `hass` update.
+        this._liveUpdatesUnavailable = true;
+      }
     } finally {
       this._starting = false;
     }

@@ -7,7 +7,8 @@ from dataclasses import dataclass, field, replace
 from datetime import timedelta
 from typing import TYPE_CHECKING, Any
 
-from homeassistant.exceptions import HomeAssistantError
+from homeassistant.core import callback
+from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from homeassistant.helpers.event import async_track_time_change
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
@@ -16,7 +17,7 @@ from .const import DOMAIN, Language
 from .corrections import Correction, ingredient_key
 from .dataset import Dataset, load_dataset
 from .matching import match_ingredient
-from .mealie import MealieError, client_for, credentials_for
+from .mealie import MealieAuthError, MealieError, client_for, credentials_for
 from .scoring import RecipeScore, Resolved, rank, resolve, score_recipe
 
 if TYPE_CHECKING:
@@ -30,7 +31,6 @@ if TYPE_CHECKING:
 
 _LOGGER = logging.getLogger(__name__)
 UPDATE_INTERVAL = timedelta(minutes=30)
-EVENT_UPDATED = f"{DOMAIN}_updated"
 ACTIONS = ("confirm", "wrong", "change", "ignore", "no_season")
 
 
@@ -104,6 +104,11 @@ class SeasonalGroceriesCoordinator(DataUpdateCoordinator[CoordinatorData]):
             )
 
     @property
+    def mealie_configured(self) -> bool:
+        """Whether the entry has a Mealie connection (it may still be failing)."""
+        return self.settings.get("mealie", {}).get("mode", "none") != "none"
+
+    @property
     def month(self) -> int:
         """The current month in Home Assistant's timezone."""
         return dt_util.now().month
@@ -118,7 +123,10 @@ class SeasonalGroceriesCoordinator(DataUpdateCoordinator[CoordinatorData]):
                 return self._build(mealie_configured=False)
             client = client_for(self.hass, credentials)
             foods = await client.get_foods()
-            recipes = await client.get_recipes()
+            recipes = await client.get_recipes(self._recipes)
+        except MealieAuthError as err:
+            msg = "Mealie rejected the API token"
+            raise ConfigEntryAuthFailed(msg) from err
         except MealieError as err:
             msg = f"Mealie unavailable: {err}"
             raise UpdateFailed(msg) from err
@@ -126,10 +134,16 @@ class SeasonalGroceriesCoordinator(DataUpdateCoordinator[CoordinatorData]):
         self._recipes = recipes
         return self._build(mealie_configured=True)
 
+    @callback
     def async_recompute(self) -> None:
-        """Rebuild the ranking from cached Mealie data (corrections, new month)."""
-        configured = self.data.mealie_configured if self.data else False
-        self.async_set_updated_data(self._build(mealie_configured=configured))
+        """
+        Rebuild the ranking from cached Mealie data (corrections, new month).
+
+        Unlike `async_set_updated_data` this leaves `last_update_success` alone, so a
+        Mealie outage stays visible after a recompute.
+        """
+        self.data = self._build(mealie_configured=self.mealie_configured)
+        self.async_update_listeners()
 
     def _build(self, *, mealie_configured: bool) -> CoordinatorData:
         dataset, month = self.dataset, self.month
@@ -192,6 +206,7 @@ class SeasonalGroceriesCoordinator(DataUpdateCoordinator[CoordinatorData]):
             self._unsub_month()
             self._unsub_month = None
 
+    @callback
     def _handle_midnight(self, now: Any) -> None:
         if dt_util.as_local(now).day == 1:
             self.async_recompute()

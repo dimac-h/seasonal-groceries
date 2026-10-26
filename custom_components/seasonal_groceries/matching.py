@@ -39,6 +39,28 @@ class Match:
     suggestions: tuple[str, ...]
 
 
+_NUMBER = re.compile(r"^[\d.,/\u00bd\u00bc\u00be\u2153\u2154\-\u2013]+$")
+_MAX_UNIT_LENGTH = 3
+
+
+def strip_quantity(text: str) -> str:
+    """
+    Drop a leading amount and unit: "400 g tomaten" -> "tomaten".
+
+    The unit is a short word right after the number ("g", "el", "bos"); it is only
+    dropped when something remains after it, so "2 ui" stays "ui".
+    """
+    tokens = text.split()
+    index = 0
+    while index < len(tokens) and _NUMBER.match(tokens[index]):
+        index += 1
+    if index and index + 1 < len(tokens):
+        unit = tokens[index].rstrip(".")
+        if unit.isalpha() and len(unit) <= _MAX_UNIT_LENGTH:
+            index += 1
+    return " ".join(tokens[index:]) if index < len(tokens) else text
+
+
 def normalise(text: str) -> str:
     """Lowercase, fold accents, replace punctuation by single spaces."""
     folded = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode()
@@ -53,7 +75,7 @@ def _variants(
     ingredient: MealieIngredient, foods_by_id: Mapping[str, MealieFood]
 ) -> set[str]:
     """Every normalised spelling Mealie knows for this ingredient."""
-    texts = [ingredient.text]
+    texts = [strip_quantity(ingredient.text)]
     food = foods_by_id.get(ingredient.food_id) if ingredient.food_id else None
     if food:
         texts += [food.name, *food.aliases]

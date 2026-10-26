@@ -9,7 +9,6 @@ import pytest
 from homeassistant.config_entries import ConfigEntryState
 from pytest_homeassistant_custom_component.common import (
     MockConfigEntry,
-    async_capture_events,
 )
 
 from custom_components.seasonal_groceries.const import DOMAIN
@@ -358,16 +357,50 @@ async def test_alias_not_written_for_free_text_or_ignore(
     client.add_food_alias.assert_not_awaited()
 
 
-async def test_resolve_fires_updated_event(
+async def test_subscribe_notifies_when_the_data_changes(
     hass: HomeAssistant, ws: MockHAClientWebSocket, client: MagicMock
 ) -> None:
     await _setup(hass)
-    events = async_capture_events(hass, "seasonal_groceries_updated")
+    await ws.send_json_auto_id({"type": "seasonal_groceries/subscribe"})
+    assert (await ws.receive_json())["success"] is True
 
-    await _resolve(ws, ingredient_key="text:zout", action="ignore")
-    await hass.async_block_till_done()
+    await ws.send_json_auto_id(
+        {
+            "type": "seasonal_groceries/review_resolve",
+            "ingredient_key": "text:zout",
+            "action": "ignore",
+        }
+    )
 
-    assert events
+    messages = [await ws.receive_json(), await ws.receive_json()]
+    assert {m["type"] for m in messages} == {"event", "result"}
+
+
+async def test_read_only_users_can_read_and_subscribe_but_not_resolve(
+    hass: HomeAssistant,
+    hass_ws_client: WebSocketGenerator,
+    hass_read_only_access_token: str,
+    client: MagicMock,
+) -> None:
+    await _setup(hass)
+    reader = await hass_ws_client(hass, hass_read_only_access_token)
+
+    for message in (
+        {"type": "seasonal_groceries/recipes"},
+        {"type": "seasonal_groceries/review_queue"},
+        {"type": "seasonal_groceries/item_options"},
+        {"type": "seasonal_groceries/subscribe"},
+        {
+            "type": "seasonal_groceries/items",
+            "produce_type": "fruit",
+            "mode": "now",
+        },
+    ):
+        assert (await _call(reader, **message))["success"] is True, message
+
+    denied = await _resolve(reader, ingredient_key="text:zout", action="ignore")
+    assert denied["success"] is False
+    assert denied["error"]["code"] == "unauthorized"
 
 
 @pytest.mark.parametrize(

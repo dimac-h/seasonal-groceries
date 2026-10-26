@@ -30,6 +30,12 @@ uv run ruff check . && uv run ruff format --check .
 cd custom_components/seasonal_groceries/frontend && npm ci && npm run build
 ```
 
-The frontend uses Home Assistant's own elements and theme tokens: always set `appearance`, `variant` and `size` on `ha-button`, use `ha-svg-icon` with `@mdi/js`, theme colour variables and `--ha-space-*` spacing, and keep everything RTL-safe.
+A disposable Home Assistant and Mealie for manual testing:
 
-For manual and browser testing, see "Development" in the README (`dev/` scripts and `e2e/`).
+```bash
+docker compose -f dev/docker-compose.yml up -d
+uv run python dev/seed_mealie.py       # Dutch recipes and foods in Mealie (http://localhost:9925)
+uv run python dev/setup_ha.py          # onboards HA (http://localhost:8123, user dev), adds the integration and a test dashboard
+uv run --group e2e playwright install chromium
+uv run --group e2e pytest e2e          # browser checks of the cards
+```

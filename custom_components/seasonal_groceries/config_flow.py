@@ -30,6 +30,8 @@ from .mealie import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.data_entry_flow import FlowResult
 
@@ -162,7 +164,25 @@ class SeasonalGroceriesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Skip Mealie: seasonal information only."""
         return self._create({"mode": MODE_NONE})
 
+    async def async_step_reauth(self, entry_data: Mapping[str, Any]) -> FlowResult:
+        """Mealie rejected the token: choose the connection again."""
+        return await self.async_step_mealie()
+
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Change the Mealie connection without losing the stored corrections."""
+        return await self.async_step_mealie()
+
     def _create(self, mealie: dict[str, Any]) -> FlowResult:
+        if self.source == config_entries.SOURCE_REAUTH:
+            return self.async_update_reload_and_abort(
+                self._get_reauth_entry(), data_updates={CONF_MEALIE: mealie}
+            )
+        if self.source == config_entries.SOURCE_RECONFIGURE:
+            return self.async_update_reload_and_abort(
+                self._get_reconfigure_entry(), data_updates={CONF_MEALIE: mealie}
+            )
         return self.async_create_entry(
             title="Seasonal Groceries",
             data={CONF_LANGUAGE: self._language.value, CONF_MEALIE: mealie},

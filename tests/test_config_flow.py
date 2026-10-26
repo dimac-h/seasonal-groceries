@@ -217,3 +217,66 @@ async def test_options_language_change_reloads_entry(
 
     assert setup.call_count == 1
     assert setup_integration.options["language"] == "nl"
+
+
+def _existing_entry(hass: HomeAssistant) -> MockConfigEntry:
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={"language": "nl", "mealie": {"mode": "none"}},
+    )
+    entry.add_to_hass(hass)
+    return entry
+
+
+async def test_reconfigure_changes_mealie_without_touching_the_rest(
+    hass: HomeAssistant, aioclient_mock: AiohttpClientMocker
+) -> None:
+    aioclient_mock.get(f"{URL}/api/users/self", json={"id": "u"})
+    entry = _existing_entry(hass)
+
+    menu = await entry.start_reconfigure_flow(hass)
+    assert menu["type"] is FlowResultType.MENU
+    form = await hass.config_entries.flow.async_configure(
+        menu["flow_id"], {"next_step_id": "manual"}
+    )
+    result = await hass.config_entries.flow.async_configure(
+        form["flow_id"], {"url": URL, "token": "new", "verify_ssl": True}
+    )
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "reconfigure_successful"
+    assert entry.data == {
+        "language": "nl",
+        "mealie": {"mode": "manual", "url": URL, "token": "new", "verify_ssl": True},
+    }
+
+
+async def test_reauth_replaces_the_token(
+    hass: HomeAssistant, aioclient_mock: AiohttpClientMocker
+) -> None:
+    aioclient_mock.get(f"{URL}/api/users/self", json={"id": "u"})
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            "language": "en",
+            "mealie": {
+                "mode": "manual",
+                "url": URL,
+                "token": "old",
+                "verify_ssl": True,
+            },
+        },
+    )
+    entry.add_to_hass(hass)
+
+    menu = await entry.start_reauth_flow(hass)
+    form = await hass.config_entries.flow.async_configure(
+        menu["flow_id"], {"next_step_id": "manual"}
+    )
+    result = await hass.config_entries.flow.async_configure(
+        form["flow_id"], {"url": URL, "token": "fresh", "verify_ssl": True}
+    )
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "reauth_successful"
+    assert entry.data["mealie"]["token"] == "fresh"

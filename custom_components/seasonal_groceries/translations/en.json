@@ -39,7 +39,9 @@
       "invalid_auth": "Mealie rejected the API token."
     },
     "abort": {
-      "single_instance_allowed": "Seasonal Groceries is already set up."
+      "single_instance_allowed": "Seasonal Groceries is already set up.",
+      "reauth_successful": "Mealie connection updated.",
+      "reconfigure_successful": "Mealie connection updated."
     }
   },
   "options": {

@@ -54,8 +54,6 @@ export interface ItemOption {
   type: ProduceType;
 }
 
-const EVENT_UPDATED = 'seasonal_groceries_updated';
-
 function call<T>(hass: HomeAssistant, type: string, data: Record<string, unknown> = {}): Promise<T> {
   return hass.connection.sendMessagePromise<T>({ type: `seasonal_groceries/${type}`, ...data });
 }
@@ -94,9 +92,14 @@ export async function resolveEntry(
   });
 }
 
-/** Calls `onUpdate` whenever the integration refreshed its data; resolves to an unsubscribe function. */
+/**
+ * Calls `onUpdate` whenever the integration's data changed; resolves to an unsubscribe function.
+ * Uses the integration's own subscribe command, which every user may call (bus events are admin-only).
+ */
 export async function subscribeUpdates(hass: HomeAssistant, onUpdate: () => void): Promise<() => void> {
-  const unsubscribe = await hass.connection.subscribeEvents(onUpdate, EVENT_UPDATED);
+  const unsubscribe = await hass.connection.subscribeMessage(() => onUpdate(), {
+    type: 'seasonal_groceries/subscribe',
+  });
   return () => {
     // HA rejects with "Subscription not found" if the socket reconnected (or the
     // subscription was already dropped) before we unsubscribe — nothing to clean up then.

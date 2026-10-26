@@ -22,6 +22,7 @@ from custom_components.seasonal_groceries.corrections import (
     CorrectionsStore,
 )
 from custom_components.seasonal_groceries.mealie import (
+    MealieAuthError,
     MealieConnectionError,
     MealieIngredient,
     MealieRecipe,
@@ -205,3 +206,48 @@ async def test_dataset_file_is_read_off_the_event_loop(
 
     assert threads
     assert all(thread is not loop_thread for thread in threads)
+
+
+async def test_month_rollover_notifies_listeners_on_the_event_loop(
+    hass: HomeAssistant, freezer: FrozenDateTimeFactory
+) -> None:
+    freezer.move_to("2026-10-31 23:59:00+00:00")
+    loop_thread = threading.current_thread()
+    notified: list[threading.Thread] = []
+    coordinator, _ = await _coordinator(hass)
+    await coordinator.async_refresh()
+    coordinator.async_add_listener(lambda: notified.append(threading.current_thread()))
+    coordinator.async_start_month_listener()
+
+    freezer.move_to("2026-11-01 00:00:10+00:00")
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done()
+    coordinator.async_stop_month_listener()
+
+    assert notified
+    assert all(thread is loop_thread for thread in notified)
+
+
+async def test_recompute_keeps_the_mealie_failure_state(hass: HomeAssistant) -> None:
+    client = _fake_client()
+    client.get_recipes = AsyncMock(side_effect=MealieConnectionError("down"))
+    coordinator, corrections = await _coordinator(hass, client=client)
+    await coordinator.async_refresh()
+    assert coordinator.last_update_success is False
+
+    await corrections.set("text:zout", Correction(status="ignored"))
+    coordinator.async_recompute()
+
+    assert coordinator.last_update_success is False
+    assert coordinator.data.mealie_configured is True
+
+
+async def test_auth_failure_starts_reauth(hass: HomeAssistant) -> None:
+    client = _fake_client()
+    client.get_foods = AsyncMock(side_effect=MealieAuthError("revoked"))
+    coordinator, _ = await _coordinator(hass, client=client)
+
+    await coordinator.async_refresh()
+
+    assert coordinator.last_update_success is False
+    assert list(coordinator.config_entry.async_get_active_flows(hass, {"reauth"}))

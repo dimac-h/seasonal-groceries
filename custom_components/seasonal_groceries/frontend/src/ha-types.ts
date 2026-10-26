@@ -5,6 +5,7 @@ export type UnsubscribeFunc = () => void;
 export interface Connection {
   sendMessagePromise<T>(message: Record<string, unknown>): Promise<T>;
   subscribeEvents<T>(callback: (ev: T) => void, eventType: string): Promise<UnsubscribeFunc>;
+  subscribeMessage<T>(callback: (message: T) => void, subscribeMessage: Record<string, unknown>): Promise<UnsubscribeFunc>;
 }
 
 export interface HomeAssistant {

@@ -107,27 +107,6 @@ This integration is not affiliated with, or endorsed by, any of these organisati
 
 Remove the integration under **Settings → Devices & Services**; this also deletes the match corrections stored in Home Assistant. If you installed it with HACS, remove it there too. Mealie is not changed, except for aliases you let the integration add with *Save corrections as aliases in Mealie*; those stay in Mealie.
 
-## Development
-
-```bash
-uv sync --group dev
-uv run pytest                      # unit tests
-uv run ruff check . && uv run ruff format --check .
-cd custom_components/seasonal_groceries/frontend && npm ci && npm run build
-```
-
-A disposable Home Assistant and Mealie for manual testing:
-
-```bash
-docker compose -f dev/docker-compose.yml up -d
-uv run python dev/seed_mealie.py       # Dutch recipes and foods in Mealie (http://localhost:9925)
-uv run python dev/setup_ha.py          # onboards HA (http://localhost:8123, user dev), adds the integration and a test dashboard
-uv run --group e2e playwright install chromium
-uv run --group e2e pytest e2e          # browser checks of the cards
-```
-
-See [CONTRIBUTING.md](CONTRIBUTING.md). Ideas for later are in [FUTURE_WORK.md](FUTURE_WORK.md).
-
 ## License
 
 [MIT](LICENSE)

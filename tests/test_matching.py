@@ -6,7 +6,11 @@ import pytest
 
 from custom_components.seasonal_groceries.const import Language
 from custom_components.seasonal_groceries.dataset import load_dataset
-from custom_components.seasonal_groceries.matching import match_ingredient, normalise
+from custom_components.seasonal_groceries.matching import (
+    match_ingredient,
+    normalise,
+    strip_quantity,
+)
 from custom_components.seasonal_groceries.mealie import MealieFood, MealieIngredient
 
 NL = load_dataset(Language.NL)
@@ -96,3 +100,26 @@ def test_empty_text_is_none() -> None:
     match = match_ingredient(_text("   "), {}, NL)
 
     assert (match.kind, match.item_key, match.suggestions) == ("none", None, ())
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("400 g tomaten", "tomaten"),
+        ("2 uien", "uien"),
+        ("1/2 el olijfolie", "olijfolie"),
+        ("1 1/2 el olijfolie", "olijfolie"),
+        ("½ komkommer", "komkommer"),
+        ("3-4 wortels", "wortels"),
+        ("2 ui", "ui"),
+        ("tomaten", "tomaten"),
+        ("verse basilicum", "verse basilicum"),
+    ],
+)
+def test_strip_quantity(text: str, expected: str) -> None:
+    assert strip_quantity(text) == expected
+
+
+def test_free_text_with_quantity_matches() -> None:
+    assert match_ingredient(_text("2 uien"), {}, NL).item_key == "ui"
+    assert match_ingredient(_text("400 g tomaten"), {}, NL).item_key == "tomaat"
