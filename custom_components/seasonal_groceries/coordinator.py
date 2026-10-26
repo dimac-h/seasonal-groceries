@@ -92,11 +92,16 @@ class SeasonalGroceriesCoordinator(DataUpdateCoordinator[CoordinatorData]):
 
     @property
     def dataset(self) -> Dataset:
-        """The seasonal dataset in the grocery language."""
+        """The seasonal dataset in the grocery language (loaded by the first update)."""
+        return self._datasets[self.language]
+
+    async def _async_ensure_dataset(self) -> None:
+        """Read the dataset file in an executor thread, once per language."""
         language = self.language
         if language not in self._datasets:
-            self._datasets[language] = load_dataset(language)
-        return self._datasets[language]
+            self._datasets[language] = await self.hass.async_add_executor_job(
+                load_dataset, language
+            )
 
     @property
     def month(self) -> int:
@@ -104,6 +109,7 @@ class SeasonalGroceriesCoordinator(DataUpdateCoordinator[CoordinatorData]):
         return dt_util.now().month
 
     async def _async_update_data(self) -> CoordinatorData:
+        await self._async_ensure_dataset()
         mealie = self.settings.get("mealie", {"mode": "none"})
         try:
             credentials = credentials_for(self.hass, mealie)

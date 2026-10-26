@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import threading
 from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -11,6 +12,7 @@ from pytest_homeassistant_custom_component.common import (
     async_fire_time_changed,
 )
 
+import custom_components.seasonal_groceries.coordinator as coordinator_module
 from custom_components.seasonal_groceries.const import DOMAIN
 from custom_components.seasonal_groceries.coordinator import (
     SeasonalGroceriesCoordinator,
@@ -183,3 +185,23 @@ async def test_month_rollover_recomputes(
 
     assert {r.slug: r.in_season for r in coordinator.data.recipes}["kiwi"] == 0
     coordinator.async_stop_month_listener()
+
+
+async def test_dataset_file_is_read_off_the_event_loop(
+    hass: HomeAssistant, freezer: FrozenDateTimeFactory
+) -> None:
+    freezer.move_to("2026-10-15 12:00:00+00:00")
+    loop_thread = threading.current_thread()
+    threads: list[threading.Thread] = []
+    real = coordinator_module.load_dataset
+
+    def recording(*args: Any, **kwargs: Any) -> Any:
+        threads.append(threading.current_thread())
+        return real(*args, **kwargs)
+
+    coordinator, _ = await _coordinator(hass)
+    with patch.object(coordinator_module, "load_dataset", recording):
+        await coordinator.async_refresh()
+
+    assert threads
+    assert all(thread is not loop_thread for thread in threads)

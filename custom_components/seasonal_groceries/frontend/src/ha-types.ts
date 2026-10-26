@@ -11,4 +11,5 @@ export interface HomeAssistant {
   connection: Connection;
   /** The user's language, e.g. "nl" or "en-GB". */
   language: string;
+  user?: { is_admin: boolean };
 }
