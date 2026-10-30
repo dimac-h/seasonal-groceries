@@ -79,8 +79,7 @@ This integration is not affiliated with, or endorsed by, any of these organizati
 
 ## Removal
 
-Remove the integration under **Settings → Devices & Services**; this also deletes the match corrections stored in Home Assistant. If you installed it with HACS, remove it there too. Mealie is not changed, except for aliases you let the integration add with *Save corrections as aliases in Mealie*; those stay in Mealie.
-
+Remove the integration under **Settings → Devices & Services**; this also deletes the match corrections stored in Home Assistant. If you installed it with HACS, remove it there too.
 ## License
 
 [MIT](LICENSE)
