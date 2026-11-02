@@ -2,3 +2,4 @@
 import './now-card';
 import './calendar-card';
 import './match-card';
+import './recipes-card';

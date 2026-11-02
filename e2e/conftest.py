@@ -22,7 +22,9 @@ if TYPE_CHECKING:
 
 HA_URL = os.environ.get("HA_URL", "http://localhost:8123")
 HA_USER = os.environ.get("HA_USER", "dev")
-HA_PASSWORD = os.environ.get("HA_PASSWORD", "dev-password-123")
+HA_PASSWORD = os.environ.get("HA_PASSWORD", "dev")
+MEALIE_DOCKER_URL = "http://mealie:9000"
+MEALIE_HOST_URL = os.environ.get("MEALIE_URL", "http://localhost:9925")
 SCREENSHOTS = Path(__file__).parent / "screenshots"
 
 # The Home Assistant test plugin blocks sockets unless a test asks for them.
@@ -45,6 +47,13 @@ def page(request: pytest.FixtureRequest) -> Iterator[Page]:
             viewport={"width": width, "height": 1400},
             color_scheme=scheme,
             locale="en-US",
+        )
+        # The integration reaches Mealie by its Docker name; the browser cannot.
+        context.route(
+            f"{MEALIE_DOCKER_URL}/**",
+            lambda route: route.continue_(
+                url=route.request.url.replace(MEALIE_DOCKER_URL, MEALIE_HOST_URL)
+            ),
         )
         page = context.new_page()
         page.goto(f"{HA_URL}/")

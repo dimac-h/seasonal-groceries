@@ -34,6 +34,12 @@ export interface RecipeRow {
   name: string;
   in_season: number;
   total: number;
+  image_url: string | null;
+  url: string;
+  description: string;
+  tags: string[];
+  favorite: boolean;
+  rating: number | null;
 }
 
 export interface MealieStatus {

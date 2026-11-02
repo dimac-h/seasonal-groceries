@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import json
+from dataclasses import replace
 from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from homeassistant.config_entries import ConfigEntryState
+from homeassistant.setup import async_setup_component
 from pytest_homeassistant_custom_component.common import (
     MockConfigEntry,
 )
@@ -26,6 +29,7 @@ if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
     from pytest_homeassistant_custom_component.plugins import FrozenDateTimeFactory
     from pytest_homeassistant_custom_component.typing import (
+        ClientSessionGenerator,
         MockHAClientWebSocket,
         WebSocketGenerator,
     )
@@ -89,6 +93,9 @@ async def ws(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator
 ) -> MockHAClientWebSocket:
     """One authenticated WebSocket connection per test."""
+    # The integration registers its HTTP view in `async_setup`, which must run
+    # before the test client starts and freezes the router.
+    assert await async_setup_component(hass, DOMAIN, {})
     return await hass_ws_client(hass)
 
 
@@ -98,8 +105,11 @@ async def _call(ws: MockHAClientWebSocket, **message: Any) -> dict[str, Any]:
 
 
 async def test_items_now_sorted_with_credits(
-    hass: HomeAssistant, ws: MockHAClientWebSocket
+    hass: HomeAssistant,
+    ws: MockHAClientWebSocket,
+    freezer: FrozenDateTimeFactory,
 ) -> None:
+    freezer.move_to("2026-10-15 12:00:00+00:00")
     await _setup(hass, mealie={"mode": "none"})
 
     response = await _call(
@@ -184,6 +194,21 @@ async def test_recipes_ranked(
     assert len(limited["result"]["recipes"]) == 1
 
 
+async def test_recipes_without_in_season_produce_are_left_out(
+    hass: HomeAssistant, ws: MockHAClientWebSocket, client: MagicMock
+) -> None:
+    client.get_recipes = AsyncMock(
+        return_value=[*RECIPES, _recipe("zomer", _text("aardbei"))]
+    )
+    await _setup(hass)
+
+    response = await _call(ws, type="seasonal_groceries/recipes")
+
+    slugs = [r["slug"] for r in response["result"]["recipes"]]
+    assert "zomer" not in slugs
+    assert "leeg" not in slugs
+
+
 async def test_recipes_without_mealie_configured(
     hass: HomeAssistant, ws: MockHAClientWebSocket
 ) -> None:
@@ -196,6 +221,115 @@ async def test_recipes_without_mealie_configured(
         "mealie_configured": False,
         "mealie_ok": True,
     }
+
+
+async def test_recipes_include_display_fields(
+    hass: HomeAssistant, ws: MockHAClientWebSocket, client: MagicMock
+) -> None:
+    client.get_recipes = AsyncMock(
+        return_value=[
+            replace(
+                _recipe("soep", _text("pompoen")),
+                id="rid",
+                image="b6ep",
+                description="Romig.\nMet prei.",
+                tags=("soep", "herfst"),
+                rating=3.5,
+                favorite=True,
+                group_slug="home",
+            )
+        ]
+    )
+    mealie = {**MANUAL, "url": "http://m/", "token": "secret-token"}
+    await _setup(hass, mealie=mealie)
+
+    response = await _call(ws, type="seasonal_groceries/recipes")
+
+    assert response["result"]["recipes"] == [
+        {
+            "slug": "soep",
+            "name": "Soep",
+            "in_season": 1,
+            "total": 1,
+            "image_url": response["result"]["recipes"][0]["image_url"],
+            "url": "http://m/g/home/r/soep",
+            "description": "Romig.\nMet prei.",
+            "tags": ["soep", "herfst"],
+            "favorite": True,
+            "rating": 3.5,
+        }
+    ]
+    image_url = response["result"]["recipes"][0]["image_url"]
+    assert image_url.startswith("/api/seasonal_groceries/recipe_image/soep?authSig=")
+    assert "secret-token" not in json.dumps(response)
+
+
+async def test_recipe_image_is_proxied_through_a_signed_path(
+    hass: HomeAssistant,
+    ws: MockHAClientWebSocket,
+    client: MagicMock,
+    hass_client_no_auth: ClientSessionGenerator,
+) -> None:
+    client.get_recipes = AsyncMock(
+        return_value=[replace(_recipe("soep", _text("pompoen")), id="rid", image="v")]
+    )
+    client.get_image = AsyncMock(return_value=(b"img", "image/webp"))
+    await _setup(hass)
+    response = await _call(ws, type="seasonal_groceries/recipes")
+    path = response["result"]["recipes"][0]["image_url"]
+    http = await hass_client_no_auth()
+
+    assert (await http.get("/api/seasonal_groceries/recipe_image/soep")).status == 401
+    image = await http.get(path)
+
+    assert image.status == 200
+    assert image.content_type == "image/webp"
+    assert await image.read() == b"img"
+
+
+async def test_recipes_link_uses_the_external_url_option(
+    hass: HomeAssistant, ws: MockHAClientWebSocket, client: MagicMock
+) -> None:
+    client.get_recipes = AsyncMock(
+        return_value=[replace(_recipe("soep", _text("pompoen")), group_slug="home")]
+    )
+    await _setup(hass, options={"mealie_external_url": "https://mealie.example/"})
+
+    response = await _call(ws, type="seasonal_groceries/recipes")
+
+    assert response["result"]["recipes"][0]["url"] == (
+        "https://mealie.example/g/home/r/soep"
+    )
+
+
+async def test_recipes_with_missing_display_fields(
+    hass: HomeAssistant, ws: MockHAClientWebSocket, client: MagicMock
+) -> None:
+    client.get_recipes = AsyncMock(
+        return_value=[replace(_recipe("soep", _text("pompoen")), group_slug="home")]
+    )
+    await _setup(hass)
+
+    response = await _call(ws, type="seasonal_groceries/recipes")
+
+    row = response["result"]["recipes"][0]
+    assert row["image_url"] is None
+    assert row["description"] == ""
+    assert row["tags"] == []
+    assert row["favorite"] is False
+    assert row["rating"] is None
+    assert row["url"] == "http://m/g/home/r/soep"
+
+
+async def test_recipe_missing_from_the_cache_is_left_out(
+    hass: HomeAssistant, ws: MockHAClientWebSocket, client: MagicMock
+) -> None:
+    entry = await _setup(hass)
+    entry.runtime_data._recipes = {}  # noqa: SLF001 - ranked data outlived the cache
+
+    response = await _call(ws, type="seasonal_groceries/recipes")
+
+    assert response["result"]["recipes"] == []
 
 
 async def test_recipes_when_mealie_down(
@@ -290,7 +424,7 @@ async def test_resolve_change_applies_to_all_recipes_sharing_ingredient(
         r["slug"]: (r["in_season"], r["total"]) for r in response["result"]["recipes"]
     }
     assert ranked["salade"] == (1, 2)
-    assert ranked["pasta"] == (0, 2)
+    assert "pasta" not in ranked  # nothing in season: left out of the response
     assert "food:f-tom" not in await _queue_keys(ws)
 
 
@@ -379,9 +513,11 @@ async def test_subscribe_notifies_when_the_data_changes(
 async def test_read_only_users_can_read_and_subscribe_but_not_resolve(
     hass: HomeAssistant,
     hass_ws_client: WebSocketGenerator,
-    hass_read_only_access_token: str,
     client: MagicMock,
+    hass_read_only_access_token: str,
 ) -> None:
+    # `client` freezes the clock, so it must come first: a token issued before the
+    # freeze would be dated in the future and rejected.
     await _setup(hass)
     reader = await hass_ws_client(hass, hass_read_only_access_token)
 

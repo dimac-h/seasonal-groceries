@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
+import logging
+from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, Any
 
 from aiohttp import ClientError, ClientTimeout
@@ -17,6 +18,8 @@ if TYPE_CHECKING:
     from aiohttp import ClientSession
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant
+
+_LOGGER = logging.getLogger(__name__)
 
 MEALIE_DOMAIN = "mealie"
 MODE_NONE = "none"
@@ -67,12 +70,24 @@ class MealieIngredient:
 
 @dataclass(frozen=True)
 class MealieRecipe:
-    """A Mealie recipe with its ingredients."""
+    """
+    A Mealie recipe with its ingredients and display fields.
+
+    `rating` and `favorite` are those of the API token's user: the `rating` in
+    Mealie's recipe list is an average over all users and is ignored.
+    """
 
     slug: str
     name: str
     ingredients: tuple[MealieIngredient, ...]
     updated: str = ""
+    id: str = ""
+    image: str | None = None
+    description: str = ""
+    tags: tuple[str, ...] = ()
+    rating: float | None = None
+    favorite: bool = False
+    group_slug: str = ""
 
 
 @dataclass(frozen=True)
@@ -92,6 +107,11 @@ def _parse_ingredient(raw: Mapping[str, Any]) -> MealieIngredient | None:
     return MealieIngredient(food_id=None, text=text) if text else None
 
 
+def recipe_url(base_url: str, recipe: MealieRecipe) -> str:
+    """Return the Mealie web address that opens the recipe."""
+    return f"{base_url.rstrip('/')}/g/{recipe.group_slug}/r/{recipe.slug}"
+
+
 class MealieClient:
     """Minimal async client for the parts of Mealie's API this integration needs."""
 
@@ -108,6 +128,7 @@ class MealieClient:
         *,
         params: Mapping[str, Any] | None = None,
         body: Mapping[str, Any] | None = None,
+        raw: bool = False,
     ) -> Any:
         try:
             async with self._session.request(
@@ -125,6 +146,8 @@ class MealieClient:
                 if response.status >= _HTTP_ERROR:
                     msg = f"{path}: HTTP {response.status}"
                     raise MealieConnectionError(msg)
+                if raw:
+                    return await response.read(), response.content_type
                 return await response.json()
         except (ClientError, TimeoutError, ValueError) as err:
             msg = f"{path}: {err}"
@@ -160,25 +183,64 @@ class MealieClient:
             for raw in await self._paged("/api/foods")
         ]
 
+    async def get_image(self, recipe: MealieRecipe) -> tuple[bytes, str]:
+        """Return the bytes and content type of a recipe's image."""
+        path = f"/api/media/recipes/{recipe.id}/images/min-original.webp"
+        return await self._request("GET", path, raw=True)
+
+    async def _get_user_ratings(self) -> dict[str, tuple[float | None, bool]]:
+        """
+        Return the token user's (rating, favourite) per recipe id.
+
+        Ratings only decorate the cards, so a Mealie that cannot give them (no such
+        endpoint, a token without access) yields none instead of failing the recipes.
+        """
+        try:
+            body = await self._request("GET", "/api/users/self/ratings")
+            return {
+                entry["recipeId"]: (entry.get("rating"), bool(entry.get("isFavorite")))
+                for entry in body["ratings"]
+            }
+        except (MealieError, KeyError, TypeError) as err:
+            _LOGGER.debug("Mealie ratings unavailable: %s", err)
+            return {}
+
     async def get_recipes(
         self, cached: Sequence[MealieRecipe] = ()
     ) -> list[MealieRecipe]:
         """
-        Return all recipes with ingredients.
+        Return all recipes with ingredients and display fields.
 
-        Details are fetched per recipe, but a recipe whose `dateUpdated` matches the
-        one in `cached` is reused. A recipe deleted meanwhile is skipped.
+        Ingredients are fetched per recipe, but a recipe whose `dateUpdated` matches
+        the one in `cached` reuses them. Display fields, ratings and favourites are
+        refreshed on every call, because changing them does not touch `dateUpdated`.
+        A recipe deleted meanwhile is skipped.
         """
         known = {recipe.slug: recipe for recipe in cached}
+        user = await self._request("GET", "/api/users/self")
+        group_slug = (
+            str(user.get("groupSlug") or "home") if isinstance(user, dict) else "home"
+        )
+        ratings = await self._get_user_ratings()
         summaries = await self._paged("/api/recipes")
         semaphore = asyncio.Semaphore(_DETAIL_CONCURRENCY)
 
         async def detail(summary: Mapping[str, Any]) -> MealieRecipe | None:
             slug = summary["slug"]
             stamp = str(summary.get("dateUpdated") or summary.get("updatedAt") or "")
+            rating, favorite = ratings.get(summary["id"], (None, False))
+            display = {
+                "id": summary["id"],
+                "image": summary.get("image") or None,
+                "description": str(summary.get("description") or ""),
+                "tags": tuple(str(tag["name"]) for tag in summary.get("tags") or []),
+                "rating": rating,
+                "favorite": favorite,
+                "group_slug": group_slug,
+            }
             previous = known.get(slug)
             if previous is not None and stamp and previous.updated == stamp:
-                return previous
+                return replace(previous, name=summary["name"], **display)
             async with semaphore:
                 try:
                     raw = await self._request("GET", f"/api/recipes/{slug}")
@@ -193,6 +255,7 @@ class MealieClient:
                     if (ingredient := _parse_ingredient(entry)) is not None
                 ),
                 updated=stamp,
+                **display,
             )
 
         try:

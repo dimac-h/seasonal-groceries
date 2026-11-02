@@ -2,17 +2,21 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
 from typing import TYPE_CHECKING, Any
 
 import voluptuous as vol
 from homeassistant.components import websocket_api
+from homeassistant.components.http.auth import async_sign_path
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
 
 from .const import DOMAIN
 from .coordinator import ACTIONS
+from .mealie import recipe_url
 from .season import rows
+from .views import image_path
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -20,6 +24,7 @@ if TYPE_CHECKING:
     from .coordinator import SeasonalGroceriesCoordinator
 
 PRODUCE_TYPES = ["vegetable", "fruit"]
+_IMAGE_LINK_LIFETIME = timedelta(days=1)
 
 
 def _coordinator(hass: HomeAssistant) -> SeasonalGroceriesCoordinator | None:
@@ -54,6 +59,41 @@ def _mealie_status(coordinator: SeasonalGroceriesCoordinator) -> dict[str, bool]
         "mealie_configured": coordinator.mealie_configured,
         "mealie_ok": coordinator.last_update_success,
     }
+
+
+def _recipe_rows(
+    coordinator: SeasonalGroceriesCoordinator, scored: Any, limit: int | None
+) -> list[dict[str, Any]]:
+    """Build rows, leaving out recipes without in-season produce or no longer cached."""
+    link_url = coordinator.mealie_link_url
+    rows_: list[dict[str, Any]] = []
+    for item in scored:
+        if item.in_season == 0:
+            continue
+        recipe = coordinator.recipe(item.slug)
+        if recipe is None or link_url is None:
+            continue
+        rows_.append(
+            {
+                "slug": item.slug,
+                "name": item.name,
+                "in_season": item.in_season,
+                "total": item.total,
+                "image_url": async_sign_path(
+                    coordinator.hass, image_path(item.slug), _IMAGE_LINK_LIFETIME
+                )
+                if recipe.image
+                else None,
+                "url": recipe_url(link_url, recipe),
+                "description": recipe.description,
+                "tags": list(recipe.tags),
+                "favorite": recipe.favorite,
+                "rating": recipe.rating,
+            }
+        )
+        if len(rows_) == limit:
+            break
+    return rows_
 
 
 @websocket_api.websocket_command(
@@ -133,15 +173,7 @@ async def ws_recipes(
     connection.send_result(
         msg["id"],
         {
-            "recipes": [
-                {
-                    "slug": r.slug,
-                    "name": r.name,
-                    "in_season": r.in_season,
-                    "total": r.total,
-                }
-                for r in recipes[: msg.get("limit")]
-            ],
+            "recipes": _recipe_rows(coordinator, recipes, msg.get("limit")),
             **_mealie_status(coordinator),
         },
     )
