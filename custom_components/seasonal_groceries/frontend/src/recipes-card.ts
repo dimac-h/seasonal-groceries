@@ -57,6 +57,7 @@ export class RecipesCard extends SeasonalCard {
         outline-offset: 2px;
       }
       .media {
+        position: relative;
         flex: 0 0 96px;
         align-self: flex-start;
         aspect-ratio: 1;
@@ -72,6 +73,23 @@ export class RecipesCard extends SeasonalCard {
         width: 100%;
         height: 100%;
         object-fit: cover;
+      }
+      .score {
+        position: absolute;
+        inset-inline-start: var(--ha-space-1, 4px);
+        inset-block-end: var(--ha-space-1, 4px);
+        max-width: calc(100% - 2 * var(--ha-space-1, 4px));
+        padding: 2px var(--ha-space-2, 8px);
+        border-radius: var(--ha-border-radius-pill, 12px);
+        /* Inverse of the theme's text colour: dark on a light theme, light on a dark one. */
+        background: color-mix(in srgb, var(--primary-text-color) 85%, transparent);
+        color: var(--card-background-color);
+        font-size: 12px;
+        font-weight: 500;
+        line-height: 1.4;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       .body {
         flex: 1;
@@ -198,6 +216,7 @@ export class RecipesCard extends SeasonalCard {
       ${url && !this._brokenImages.has(url)
         ? html`<img src=${url} alt="" loading="lazy" @error=${() => this._markBroken(url)} />`
         : html`<ha-svg-icon .path=${mdiSilverwareForkKnife}></ha-svg-icon>`}
+      <span class="score">${this.t('recipes.score', { in_season: recipe.in_season, total: recipe.total })}</span>
     </div>`;
   }
 
@@ -228,7 +247,6 @@ export class RecipesCard extends SeasonalCard {
                 : ''}
             </div>
             <div class="meta">
-              <span>${this.t('recipes.score', { in_season: recipe.in_season, total: recipe.total })}</span>
               ${this._renderRating(recipe.rating)}
             </div>
             ${recipe.description ? html`<div class="description">${recipe.description}</div>` : ''}
