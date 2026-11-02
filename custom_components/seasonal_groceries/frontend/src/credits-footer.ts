@@ -1,10 +1,10 @@
 import { LitElement, html, css } from 'lit';
 import { property } from 'lit/decorators.js';
 import { customElement } from './register';
-import type { Credit, ProduceType } from './api';
+import type { Credit } from './api';
 import { translator } from './i18n';
 
-/** Footer shown on every card: who the data comes from, when, and what is provisional. */
+/** Footer shown on every card: who the data comes from, when. */
 @customElement('sg-credits-footer')
 export class CreditsFooter extends LitElement {
   static styles = css`
@@ -24,12 +24,10 @@ export class CreditsFooter extends LitElement {
 
   @property({ attribute: false }) credits: Record<string, Credit> = {};
   @property() dataAsOf = '';
-  @property({ attribute: false }) provisional: ProduceType[] = [];
   @property() language = 'en';
 
   render() {
     const t = translator(this.language);
-    const types = this.provisional.map(type => t(`common.${type}`).toLowerCase()).join(', ');
     return html`
       ${Object.values(this.credits).map(
         credit => html`<div>
@@ -38,7 +36,6 @@ export class CreditsFooter extends LitElement {
         </div>`,
       )}
       ${this.dataAsOf ? html`<div>${t('credits.data_as_of', { date: this.dataAsOf })}</div>` : ''}
-      ${types ? html`<div>${t('credits.provisional', { types })}</div>` : ''}
     `;
   }
 }
