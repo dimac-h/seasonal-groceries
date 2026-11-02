@@ -7,7 +7,7 @@
 
 <table>
 <tr>
-<td><img src="https://raw.githubusercontent.com/dimac-h/seasonal-groceries/main/images/now-card.png" alt="The in-season-now card, showing fruit in season in October with pesticide levels and the most seasonal recipes" width="360"></td>
+<td><img src="https://raw.githubusercontent.com/dimac-h/seasonal-groceries/main/images/now-card.png" alt="The in-season-now card, showing fruit in season in November with pesticide levels" width="360"></td>
 <td><img src="https://raw.githubusercontent.com/dimac-h/seasonal-groceries/main/images/calendar-card-dark.png" alt="The year calendar card in dark mode" width="360"></td>
 </tr>
 </table>
@@ -16,7 +16,7 @@
 
 - **In season now:** a list of the vegetables or fruit in season this month.
 - **Year calendar:** which month each item is in season.
-- **Recipe ranking (optional):** your Mealie recipes sorted by the share of their fruit and vegetables that is in season.
+- **Recipes (optional):** your Mealie recipes sorted by the share of their fruit and vegetables that is in season, each with its image, description, tags, rating and favourite heart, linking to the recipe in Mealie.
 - **Match review:** confirm or fix how a Mealie ingredient is matched to a seasonal item. Names and aliases you already have in Mealie are used first.
 
 
@@ -55,7 +55,11 @@ The cards are available in the dashboard card picker. In YAML:
 ```yaml
 type: custom:seasonal-groceries-now-card
 produce_type: vegetable   # or fruit; add the card twice to show both
-max_recipes: 5            # recipes shown below the list (Mealie only)
+```
+
+```yaml
+type: custom:seasonal-groceries-recipes-card # needs Mealie
+max_recipes: 5            # 1 to 20
 ```
 
 ```yaml
@@ -67,6 +71,8 @@ max_rows: 15              # row limit, applied after sorting
 ```yaml
 type: custom:seasonal-groceries-match-card # to confirm matches, otherwise ingredients are ignored
 ```
+
+The recipes card shows the rating and the favourite heart of the user the Mealie API token belongs to (the rating in Mealie's own recipe list is an average over all users, so it is not used). Recipe images and links use the address Home Assistant uses to reach Mealie: if that is an address your browser cannot reach, such as a Docker-internal hostname, images show a placeholder and links do not open.
 
 ## Current data sources
 

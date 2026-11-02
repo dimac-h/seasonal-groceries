@@ -4,7 +4,7 @@ Onboard the dev Home Assistant, add the integration and a test dashboard.
 Usage (after docker compose up and dev/seed_mealie.py):
     uv run python dev/setup_ha.py [--language nl|en]
 
-Creates the user dev / dev-password-123 and a dashboard at /lovelace/seasonal.
+Creates the user dev / dev and a dashboard at /lovelace/seasonal.
 """
 
 from __future__ import annotations
@@ -16,10 +16,11 @@ from pathlib import Path
 
 import aiohttp
 
+HTTP_OK = 200
 BASE = "http://localhost:8123"
 CLIENT = f"{BASE}/"
 STATE = Path(__file__).parent / ".state"
-USER = {"username": "dev", "password": "dev-password-123"}
+USER = {"username": "dev", "password": "dev"}
 CARDS = [
     {"type": "custom:seasonal-groceries-now-card", "produce_type": "vegetable"},
     {"type": "custom:seasonal-groceries-now-card", "produce_type": "fruit"},
@@ -33,13 +34,21 @@ CARDS = [
         "produce_type": "fruit",
         "max_rows": 8,
     },
+    {"type": "custom:seasonal-groceries-recipes-card", "max_recipes": 5},
     {"type": "custom:seasonal-groceries-match-card"},
 ]
 
 
 async def access_token(session: aiohttp.ClientSession) -> str:
     async with session.get(f"{BASE}/api/onboarding") as response:
-        steps = {s["step"]: s["done"] for s in await response.json()}
+        # Home Assistant answers 404 once onboarding is complete.
+        steps = (
+            {s["step"]: s["done"] for s in await response.json()}
+            if response.status == HTTP_OK
+            else dict.fromkeys(
+                ("user", "core_config", "analytics", "integration"), True
+            )
+        )
     if not steps["user"]:
         async with session.post(
             f"{BASE}/api/onboarding/users",
