@@ -25,6 +25,10 @@ export function monthName(month: number, language: string | undefined): string {
   return new Intl.DateTimeFormat(language ?? 'en', { month: 'long' }).format(new Date(2000, month - 1, 1));
 }
 
+export function monthShort(month: number, language: string | undefined): string {
+  return new Intl.DateTimeFormat(language ?? 'en', { month: 'short' }).format(new Date(2000, month - 1, 1));
+}
+
 export function monthInitial(month: number, language: string | undefined): string {
   return new Intl.DateTimeFormat(language ?? 'en', { month: 'narrow' }).format(new Date(2000, month - 1, 1));
 }

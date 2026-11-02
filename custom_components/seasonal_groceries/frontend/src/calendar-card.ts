@@ -7,7 +7,7 @@ import './credits-footer';
 import { getItems } from './api';
 import type { ItemsResponse, ProduceType } from './api';
 import { SeasonalCard } from './base-card';
-import { monthInitial } from './i18n';
+import { monthInitial, monthShort } from './i18n';
 import { bandColor, bandLabel } from './pesticide';
 import { sharedStyles } from './styles';
 
@@ -32,6 +32,7 @@ export class CalendarCard extends SeasonalCard {
         container-type: inline-size;
       }
       .grid {
+        position: relative;
         display: grid;
         grid-template-columns: minmax(100px, 4fr) repeat(12, minmax(8px, 1fr));
         align-items: center;
@@ -81,6 +82,12 @@ export class CalendarCard extends SeasonalCard {
         .head {
           font-size: 14px;
         }
+        .head .initial {
+          display: none;
+        }
+        .head .short {
+          display: inline;
+        }
         .cell {
           height: 28px;
           border-radius: 6px;
@@ -91,9 +98,21 @@ export class CalendarCard extends SeasonalCard {
         opacity: 0.9;
       }
       .cell.current {
-        outline: 1px solid var(--primary-text-color);
-        outline-offset: 1px;
         opacity: 1;
+      }
+      .current-month {
+        position: absolute;
+        inset: -8px -2px;
+        border-radius: 8px;
+        background: var(--secondary-background-color);
+      }
+      .head,
+      .cell,
+      .item {
+        position: relative;
+      }
+      .short {
+        display: none;
       }
     `,
   ];
@@ -140,9 +159,13 @@ export class CalendarCard extends SeasonalCard {
     const language = this.hass?.language;
     return html`
       <div class="grid">
+        <span class="current-month" style="grid-column:${items.month + 1} / span 1; grid-row:1 / span ${items.rows.length + 1}"></span>
         <span></span>
         ${MONTHS.map(
-          month => html`<span class="head ${month === items.month ? 'current' : ''}">${monthInitial(month, language)}</span>`,
+          month => html`<span class="head ${month === items.month ? 'current' : ''}"
+            ><span class="initial">${monthInitial(month, language)}</span
+            ><span class="short">${monthShort(month, language)}</span></span
+          >`,
         )}
         ${items.rows.map(
           row => html`
