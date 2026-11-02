@@ -31,3 +31,6 @@ def language_for(code: str | None) -> Language:
         return Language(base)
     except ValueError:
         return DEFAULT_LANGUAGE
+
+
+CONF_EXTERNAL_URL = "mealie_external_url"

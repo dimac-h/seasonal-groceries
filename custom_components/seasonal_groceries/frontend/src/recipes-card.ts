@@ -1,5 +1,6 @@
 import { html, css } from 'lit';
 import { state } from 'lit/decorators.js';
+import { ifDefined } from 'lit/directives/if-defined.js';
 import { customElement } from './register';
 import { mdiChefHat, mdiHeart, mdiSilverwareForkKnife, mdiStar, mdiStarHalfFull, mdiStarOutline } from '@mdi/js';
 import './recipes-card-editor';
@@ -192,10 +193,9 @@ export class RecipesCard extends SeasonalCard {
 
   setConfig(config: RecipesCardConfig): void {
     if (!config) throw new Error('Invalid configuration');
-    const max = config.max_recipes ?? DEFAULT_MAX_RECIPES;
-    if (!Number.isInteger(max) || max < 1 || max > MAX_RECIPES_LIMIT) {
-      throw new Error(`max_recipes must be a whole number from 1 to ${MAX_RECIPES_LIMIT}`);
-    }
+    // Out-of-range or non-numeric values (a YAML string, an editor mid-typing) fall back instead of erroring.
+    const requested = Math.floor(Number(config.max_recipes));
+    const max = requested >= 1 ? Math.min(requested, MAX_RECIPES_LIMIT) : DEFAULT_MAX_RECIPES;
     this._config = { ...config, max_recipes: max };
     if (this.hass) void this._refresh();
   }
@@ -238,9 +238,8 @@ export class RecipesCard extends SeasonalCard {
 
   private _renderRating(rating: number | null) {
     const stars = starStates(rating);
-    if (!stars.length) return '';
-    const label = this.t('recipes.rating', { rating: Math.min(Math.max(rating ?? 0, 0), 5) });
-    return html`<span class="stars" role="img" aria-label=${label}>
+    const label = rating === null ? undefined : this.t('recipes.rating', { rating: Math.min(Math.max(rating, 0), 5) });
+    return html`<span class="stars" role=${label ? 'img' : 'presentation'} aria-label=${ifDefined(label)}>
       ${stars.map(state => html`<ha-svg-icon .path=${STAR_ICONS[state]}></ha-svg-icon>`)}
     </span>`;
   }

@@ -50,10 +50,12 @@
         "title": "Opties voor Seizoensgroenten",
         "data": {
           "language": "Taal van de boodschappen",
-          "write_back_aliases": "Correcties als alias opslaan in Mealie"
+          "write_back_aliases": "Correcties als alias opslaan in Mealie",
+          "mealie_external_url": "Mealie-adres voor receptlinks"
         },
         "data_description": {
-          "write_back_aliases": "Als je een koppeling corrigeert in de controlekaart, wordt de ingrediënttekst ook als alias aan het Mealie-product toegevoegd."
+          "write_back_aliases": "Als je een koppeling corrigeert in de controlekaart, wordt de ingrediënttekst ook als alias aan het Mealie-product toegevoegd.",
+          "mealie_external_url": "Alleen nodig als het adres dat Home Assistant voor Mealie gebruikt niet in je browser werkt, bijvoorbeeld http://mealie:9000. Laat leeg om dat adres te gebruiken."
         }
       }
     }
