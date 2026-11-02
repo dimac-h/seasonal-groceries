@@ -59,7 +59,7 @@ def test_calendar_card_highlights_the_current_month(page: Page) -> None:
     card = page.locator("seasonal-groceries-calendar-card").first
 
     expect(card.locator(".head.current")).to_have_count(1)
-    expect(card.locator(".cell.on").first).to_be_visible()
+    expect(card.locator(".bar").first).to_be_visible()
 
 
 def test_match_card_offers_review_actions(page: Page) -> None:
@@ -124,7 +124,7 @@ def test_recipes_card_shows_all_recipe_details(page: Page) -> None:
     expect(recipe.locator(".stars")).to_have_attribute(
         "aria-label", "Rated 3.7 out of 5"
     )
-    expect(_recipe(page, "Tomatensalade").locator(".favorite")).to_have_count(0)
+    expect(_recipe(page, "Preischotel").locator(".favorite")).to_have_count(0)
 
 
 def test_recipes_card_clamps_long_descriptions(page: Page) -> None:
@@ -148,8 +148,11 @@ def test_recipe_without_data_has_no_broken_elements(page: Page) -> None:
     bare = _recipe(page, "Preischotel")
 
     expect(bare.locator(".media ha-svg-icon")).to_have_count(1)
-    for selector in ("img", ".tags", ".tag", ".stars", ".favorite", ".description"):
+    for selector in ("img", ".tags", ".tag", ".favorite", ".description"):
         expect(bare.locator(selector)).to_have_count(0)
+    # An unrated recipe shows five empty stars that are hidden from screen readers.
+    expect(bare.locator(".stars")).to_have_attribute("role", "presentation")
+    expect(bare.locator(".stars")).not_to_have_attribute("aria-label", re.compile("."))
     expect(bare.locator(".body .score")).to_have_text("1 of 1 in season")
     expect(bare.locator(".name")).to_have_text("Preischotel")
 
