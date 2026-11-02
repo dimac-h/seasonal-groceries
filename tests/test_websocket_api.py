@@ -98,8 +98,11 @@ async def _call(ws: MockHAClientWebSocket, **message: Any) -> dict[str, Any]:
 
 
 async def test_items_now_sorted_with_credits(
-    hass: HomeAssistant, ws: MockHAClientWebSocket
+    hass: HomeAssistant,
+    ws: MockHAClientWebSocket,
+    freezer: FrozenDateTimeFactory,
 ) -> None:
+    freezer.move_to("2026-10-15 12:00:00+00:00")
     await _setup(hass, mealie={"mode": "none"})
 
     response = await _call(
@@ -379,9 +382,11 @@ async def test_subscribe_notifies_when_the_data_changes(
 async def test_read_only_users_can_read_and_subscribe_but_not_resolve(
     hass: HomeAssistant,
     hass_ws_client: WebSocketGenerator,
-    hass_read_only_access_token: str,
     client: MagicMock,
+    hass_read_only_access_token: str,
 ) -> None:
+    # `client` freezes the clock, so it must come first: a token issued before the
+    # freeze would be dated in the future and rejected.
     await _setup(hass)
     reader = await hass_ws_client(hass, hass_read_only_access_token)
 
