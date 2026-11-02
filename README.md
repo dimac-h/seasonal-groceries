@@ -55,6 +55,7 @@ The cards are available in the dashboard card picker. In YAML:
 ```yaml
 type: custom:seasonal-groceries-now-card
 produce_type: vegetable   # or fruit; add the card twice to show both
+hide_unknown: false       # true leaves out items without a known pesticide level
 ```
 
 ```yaml
@@ -66,6 +67,7 @@ max_recipes: 5            # 1 to 20
 type: custom:seasonal-groceries-calendar-card
 produce_type: fruit
 max_rows: 15              # row limit, applied after sorting
+hide_unknown: false       # true leaves out items without a known pesticide level
 ```
 
 ```yaml

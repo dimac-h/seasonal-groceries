@@ -10,6 +10,7 @@ export class CalendarCardEditor extends SeasonalEditor<CalendarCardConfig> {
       { name: 'title', selector: { text: {} } },
       { name: 'produce_type', selector: produceTypeSelector(t) },
       { name: 'max_rows', selector: { number: { min: 1, max: 100, mode: 'box' } } },
+      { name: 'hide_unknown', selector: { boolean: {} } },
     ];
   }
 
@@ -18,6 +19,7 @@ export class CalendarCardEditor extends SeasonalEditor<CalendarCardConfig> {
       title: t('editor.title'),
       produce_type: t('editor.produce_type'),
       max_rows: t('editor.max_rows'),
+      hide_unknown: t('editor.hide_unknown'),
     };
   }
 }

@@ -38,5 +38,6 @@
   "editor.title": "Titel",
   "editor.produce_type": "Tonen",
   "editor.max_recipes": "Aantal recepten",
-  "editor.max_rows": "Maximaal aantal rijen"
+  "editor.max_rows": "Maximaal aantal rijen",
+  "editor.hide_unknown": "Verberg items met onbekend bestrijdingsmiddelenniveau"
 }

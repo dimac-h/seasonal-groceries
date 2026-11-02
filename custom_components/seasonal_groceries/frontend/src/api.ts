@@ -68,9 +68,14 @@ export function getItems(
   hass: HomeAssistant,
   produceType: ProduceType,
   mode: 'now' | 'calendar',
-  maxRows?: number,
+  options: { maxRows?: number; hideUnknown?: boolean } = {},
 ): Promise<ItemsResponse> {
-  return call(hass, 'items', { produce_type: produceType, mode, ...(maxRows ? { max_rows: maxRows } : {}) });
+  return call(hass, 'items', {
+    produce_type: produceType,
+    mode,
+    ...(options.maxRows ? { max_rows: options.maxRows } : {}),
+    ...(options.hideUnknown ? { hide_unknown: true } : {}),
+  });
 }
 
 export function getRecipes(hass: HomeAssistant, limit?: number): Promise<{ recipes: RecipeRow[] } & MealieStatus> {
