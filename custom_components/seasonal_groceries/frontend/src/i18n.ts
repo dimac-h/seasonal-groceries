@@ -17,7 +17,7 @@ export function translator(language: string | undefined): Translate {
   const primary = dictionaries[base] ?? dictionaries.en;
   return (key, vars = {}) => {
     const template = primary[key] ?? dictionaries.en[key] ?? key;
-    return template.replace(/\{(\w+)\}/g, (match, name: string) => (name in vars ? String(vars[name]) : match));
+    return template.replace(/\{(\w+)}/g, (match, name: string) => (name in vars ? String(vars[name]) : match));
   };
 }
 

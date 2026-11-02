@@ -69,6 +69,15 @@ def test_rejects_duplicate_keys(tmp_path: Path) -> None:
         load_dataset(Language.EN, path)
 
 
+def test_rejects_credit_without_https_url(tmp_path: Path) -> None:
+    def downgrade(data: dict[str, Any]) -> None:
+        credit = next(iter(data["credits"].values()))
+        credit["url"] = credit["url"].replace("https://", "http://")
+
+    with pytest.raises(ValueError, match="https"):
+        load_dataset(Language.EN, _edited_copy(tmp_path, downgrade))
+
+
 def test_rejects_month_outside_1_12(tmp_path: Path) -> None:
     path = _edited_copy(tmp_path, lambda d: d["items"][0].update(months=[0, 13]))
     with pytest.raises(ValueError, match="month"):
