@@ -23,9 +23,12 @@ from custom_components.seasonal_groceries.mealie import (
     MealieClient,
     MealieConnectionError,
     MealieCredentials,
+    MealieRecipe,
     credentials_for,
     credentials_from_entry,
     discover_mealie_entries,
+    image_url,
+    recipe_url,
 )
 
 if TYPE_CHECKING:
@@ -36,6 +39,12 @@ if TYPE_CHECKING:
 
 FIXTURES = Path(__file__).parent / "fixtures"
 URL = "http://mealie.local:9000"
+SOUP_ID = "9b016864-eff2-4a63-a155-28e6ca233187"
+SALAD_ID = "568b0a37-db4e-4f0b-9310-5265db8bfc57"
+OWNER_RATINGS = [
+    {"recipeId": SOUP_ID, "rating": 3.7, "isFavorite": True},
+    {"recipeId": SALAD_ID, "rating": 4.5, "isFavorite": False},
+]
 
 
 def _fixture(name: str) -> Any:
@@ -46,7 +55,25 @@ def _client(hass: HomeAssistant) -> MealieClient:
     return MealieClient(async_get_clientsession(hass), URL, "secret-token")
 
 
-def _mock_recipes(aioclient_mock: AiohttpClientMocker) -> None:
+def _mock_user(
+    aioclient_mock: AiohttpClientMocker,
+    ratings: list[dict[str, Any]] | None = None,
+) -> None:
+    """Mock the token owner and their ratings and favourites."""
+    aioclient_mock.get(f"{URL}/api/users/self", json={"id": "u", "groupSlug": "home"})
+    aioclient_mock.get(
+        f"{URL}/api/users/self/ratings",
+        json={
+            "ratings": OWNER_RATINGS if ratings is None else ratings,
+        },
+    )
+
+
+def _mock_recipes(
+    aioclient_mock: AiohttpClientMocker,
+    ratings: list[dict[str, Any]] | None = None,
+) -> None:
+    _mock_user(aioclient_mock, ratings)
     listing = _fixture("mealie_recipes_list.json")
     aioclient_mock.get(f"{URL}/api/recipes", json=listing)
     for item in listing["items"]:
@@ -83,6 +110,107 @@ async def test_get_recipes_parses_linked_and_free_text_ingredients(
     assert recipes["lege-schotel"].ingredients[0].text == "zout"
 
 
+async def test_get_recipes_reads_display_fields(
+    hass: HomeAssistant, aioclient_mock: AiohttpClientMocker
+) -> None:
+    _mock_recipes(aioclient_mock)
+
+    recipes = {r.slug: r for r in await _client(hass).get_recipes()}
+
+    soup = recipes["pompoensoep"]
+    assert soup.id == SOUP_ID
+    assert soup.image == "b6ep"
+    assert soup.description.startswith("Een romige soep")
+    assert soup.tags == ("soep", "herfst")
+    assert soup.group_slug == "home"
+    bare = recipes["lege-schotel"]
+    assert (bare.image, bare.description, bare.tags) == (None, "", ())
+
+
+async def test_get_recipes_marks_favourites_and_owner_rating(
+    hass: HomeAssistant, aioclient_mock: AiohttpClientMocker
+) -> None:
+    _mock_recipes(aioclient_mock)
+
+    recipes = {r.slug: r for r in await _client(hass).get_recipes()}
+
+    # The list rating is an average over all users; only the owner's own counts.
+    assert (recipes["pompoensoep"].favorite, recipes["pompoensoep"].rating) == (
+        True,
+        3.7,
+    )
+    assert (recipes["tomatensalade"].favorite, recipes["tomatensalade"].rating) == (
+        False,
+        4.5,
+    )
+    assert (recipes["bananenbrood"].favorite, recipes["bananenbrood"].rating) == (
+        False,
+        None,
+    )
+
+
+async def test_failing_ratings_request_is_a_connection_error(
+    hass: HomeAssistant, aioclient_mock: AiohttpClientMocker
+) -> None:
+    aioclient_mock.get(f"{URL}/api/users/self", json={"groupSlug": "home"})
+    aioclient_mock.get(f"{URL}/api/users/self/ratings", status=500)
+
+    with pytest.raises(MealieConnectionError):
+        await _client(hass).get_recipes()
+
+
+async def test_display_fields_refresh_even_when_the_recipe_is_cached(
+    hass: HomeAssistant, aioclient_mock: AiohttpClientMocker
+) -> None:
+    _mock_recipes(aioclient_mock)
+    first = await _client(hass).get_recipes()
+    aioclient_mock.clear_requests()
+    _mock_recipes(
+        aioclient_mock,
+        ratings=[{"recipeId": SOUP_ID, "rating": 1.5, "isFavorite": False}],
+    )
+
+    second = {r.slug: r for r in await _client(hass).get_recipes(first)}
+
+    assert (second["pompoensoep"].rating, second["pompoensoep"].favorite) == (
+        1.5,
+        False,
+    )
+    assert second["tomatensalade"].rating is None
+    detail_calls = [
+        c for c in aioclient_mock.mock_calls if "/api/recipes/" in str(c[1])
+    ]
+    assert detail_calls == []
+
+
+@pytest.mark.parametrize(
+    ("base", "expected_root"),
+    [
+        ("http://h/", "http://h"),
+        ("http://h", "http://h"),
+        ("https://h/mealie/", "https://h/mealie"),
+    ],
+)
+def test_image_url_and_recipe_url_handle_slash_and_subpath(
+    base: str, expected_root: str
+) -> None:
+    recipe = MealieRecipe(
+        slug="soep",
+        name="Soep",
+        ingredients=(),
+        id="abc",
+        image="b6ep",
+        group_slug="home",
+    )
+
+    assert (
+        image_url(base, recipe)
+        == f"{expected_root}/api/media/recipes/abc/images/original.webp?v=b6ep"
+    )
+    assert recipe_url(base, recipe) == f"{expected_root}/g/home/r/soep"
+    assert image_url(base, MealieRecipe(slug="x", name="X", ingredients=())) is None
+
+
 async def test_get_recipes_sends_bearer_token(
     hass: HomeAssistant, aioclient_mock: AiohttpClientMocker
 ) -> None:
@@ -100,6 +228,7 @@ async def test_get_recipes_follows_pagination(
     first, second = listing["items"][:2], listing["items"][2:]
     page2 = {**listing, "page": 2, "total_pages": 2, "items": second}
     page1 = {**listing, "page": 1, "total_pages": 2, "items": first}
+    _mock_user(aioclient_mock)
     aioclient_mock.get(f"{URL}/api/recipes?page=2", json=page2)
     aioclient_mock.get(f"{URL}/api/recipes", json=page1)
     for item in listing["items"]:
@@ -265,6 +394,7 @@ async def test_missing_recipe_detail_is_skipped(
     hass: HomeAssistant, aioclient_mock: AiohttpClientMocker
 ) -> None:
     listing = _fixture("mealie_recipes_list.json")
+    _mock_user(aioclient_mock)
     aioclient_mock.get(f"{URL}/api/recipes", json=listing)
     gone = listing["items"][0]["slug"]
     for item in listing["items"]:
@@ -286,6 +416,7 @@ async def test_detail_server_error_still_fails(
     hass: HomeAssistant, aioclient_mock: AiohttpClientMocker
 ) -> None:
     listing = _fixture("mealie_recipes_list.json")
+    _mock_user(aioclient_mock)
     aioclient_mock.get(f"{URL}/api/recipes", json=listing)
     aioclient_mock.get(re.compile(rf"{URL}/api/recipes/.+"), status=500)
 
