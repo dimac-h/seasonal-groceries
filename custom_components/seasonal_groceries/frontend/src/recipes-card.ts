@@ -206,6 +206,10 @@ export class RecipesCard extends SeasonalCard {
     this._mealie = { mealie_configured: response.mealie_configured, mealie_ok: response.mealie_ok };
   }
 
+  getGridOptions() {
+    return { columns: 12, rows: 'auto', min_columns: 3, min_rows: 2 };
+  }
+
   getCardSize(): number {
     return 1 + 2 * (this._recipes.length || (this._config.max_recipes ?? DEFAULT_MAX_RECIPES));
   }

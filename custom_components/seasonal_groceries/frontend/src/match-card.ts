@@ -60,6 +60,10 @@ export class MatchCard extends SeasonalCard {
     this._mealie = { mealie_configured: queue.mealie_configured, mealie_ok: queue.mealie_ok };
   }
 
+  getGridOptions() {
+    return { columns: 6, rows: 'auto', min_columns: 3, min_rows: 2 };
+  }
+
   getCardSize(): number {
     return 4;
   }

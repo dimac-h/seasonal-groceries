@@ -27,9 +27,13 @@ export class CalendarCard extends SeasonalCard {
   static styles = [
     sharedStyles,
     css`
+      :host {
+        /* Scale the month cells with the card's own width so wide dashboards use the space. */
+        container-type: inline-size;
+      }
       .grid {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) repeat(12, minmax(8px, 12px));
+        grid-template-columns: minmax(100px, 4fr) repeat(12, minmax(8px, 1fr));
         align-items: center;
         gap: var(--ha-space-3, 12px) 2px;
       }
@@ -70,6 +74,18 @@ export class CalendarCard extends SeasonalCard {
         background: var(--divider-color);
         opacity: 0.5;
       }
+      @container (min-width: 600px) {
+        .grid {
+          gap: var(--ha-space-4, 16px) var(--ha-space-1, 4px);
+        }
+        .head {
+          font-size: 14px;
+        }
+        .cell {
+          height: 28px;
+          border-radius: 6px;
+        }
+      }
       .cell.on {
         background: var(--primary-color);
         opacity: 0.9;
@@ -102,6 +118,10 @@ export class CalendarCard extends SeasonalCard {
       maxRows: this._config.max_rows ?? DEFAULT_MAX_ROWS,
       hideUnknown: this._config.hide_unknown,
     });
+  }
+
+  getGridOptions() {
+    return { columns: 12, rows: 'auto', min_columns: 6, min_rows: 2 };
   }
 
   getCardSize(): number {

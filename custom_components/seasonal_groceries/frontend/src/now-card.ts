@@ -53,6 +53,10 @@ export class NowCard extends SeasonalCard {
     return 2 + Math.ceil((this._items?.rows.length ?? 5) / 2);
   }
 
+  getGridOptions() {
+    return { columns: 6, rows: 'auto', min_columns: 3, min_rows: 2 };
+  }
+
   static getConfigElement(): HTMLElement {
     return document.createElement('seasonal-groceries-now-card-editor');
   }
