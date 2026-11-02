@@ -20,6 +20,17 @@ export interface CalendarCardConfig {
 }
 
 export const DEFAULT_MAX_ROWS = 15;
+/** Collapses a list of in-season months into [first, last] runs of consecutive months. */
+export function seasonRuns(months: number[]): Array<[number, number]> {
+  const runs: Array<[number, number]> = [];
+  for (const month of [...months].sort((a, b) => a - b)) {
+    const last = runs[runs.length - 1];
+    if (last && month === last[1] + 1) last[1] = month;
+    else if (!last || month > last[1]) runs.push([month, month]);
+  }
+  return runs;
+}
+
 const MONTHS = Array.from({ length: 12 }, (_, index) => index + 1);
 
 @customElement('seasonal-groceries-calendar-card')
@@ -34,11 +45,16 @@ export class CalendarCard extends SeasonalCard {
       .grid {
         position: relative;
         display: grid;
-        grid-template-columns: minmax(100px, 4fr) repeat(12, minmax(8px, 1fr));
-        align-items: center;
-        gap: var(--ha-space-3, 12px) 2px;
+        grid-template-columns: minmax(100px, 4fr) minmax(96px, 12fr);
+        align-items: stretch;
+      }
+      .months,
+      .bars {
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
       }
       .head {
+        padding-block: var(--ha-space-2, 8px);
         text-align: center;
         font-size: 11px;
         color: var(--secondary-text-color);
@@ -47,9 +63,19 @@ export class CalendarCard extends SeasonalCard {
         color: var(--primary-color);
         font-weight: 700;
       }
+      .short {
+        display: none;
+      }
+      .item,
+      .track {
+        position: relative;
+        padding-block: var(--ha-space-2, 8px);
+        border-block-start: 1px solid var(--divider-color);
+      }
       .item {
         display: flex;
         flex-direction: column;
+        justify-content: center;
         min-width: 0;
         color: var(--primary-text-color);
       }
@@ -69,16 +95,51 @@ export class CalendarCard extends SeasonalCard {
         font-size: 11px;
         color: var(--secondary-text-color);
       }
-      .cell {
-        height: 16px;
-        border-radius: 3px;
+      .track {
+        display: flex;
+        align-items: center;
+      }
+      .bars {
+        position: relative;
+        flex: 1;
+        align-items: center;
+        height: 14px;
+      }
+      /* The months outside the season are only a faint line, so the bars carry the data. */
+      .bars::before {
+        content: '';
+        position: absolute;
+        inset-inline: 0;
+        top: 50%;
+        height: 2px;
+        margin-block-start: -1px;
+        border-radius: 1px;
         background: var(--divider-color);
-        opacity: 0.5;
+        opacity: 0.6;
+      }
+      .bar {
+        position: relative;
+        height: 100%;
+        margin-inline: 1px;
+        border-radius: 7px;
+        background: var(--primary-color);
+        opacity: 0.9;
+      }
+      /* Highlights the current month: a subtle column behind the header and every row. */
+      .overlay {
+        position: absolute;
+        grid-column: 2;
+        inset: 0;
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        pointer-events: none;
+      }
+      .overlay span {
+        border-inline: 1px solid color-mix(in srgb, var(--primary-color) 40%, transparent);
+        border-radius: 6px;
+        background: color-mix(in srgb, var(--primary-color) 10%, transparent);
       }
       @container (min-width: 600px) {
-        .grid {
-          gap: var(--ha-space-4, 16px) var(--ha-space-1, 4px);
-        }
         .head {
           font-size: 14px;
         }
@@ -88,31 +149,16 @@ export class CalendarCard extends SeasonalCard {
         .head .short {
           display: inline;
         }
-        .cell {
-          height: 28px;
-          border-radius: 6px;
+        .item,
+        .track {
+          padding-block: var(--ha-space-3, 12px);
         }
-      }
-      .cell.on {
-        background: var(--primary-color);
-        opacity: 0.9;
-      }
-      .cell.current {
-        opacity: 1;
-      }
-      .current-month {
-        position: absolute;
-        inset: -8px -2px;
-        border-radius: 8px;
-        background: var(--secondary-background-color);
-      }
-      .head,
-      .cell,
-      .item {
-        position: relative;
-      }
-      .short {
-        display: none;
+        .bars {
+          height: 18px;
+        }
+        .bar {
+          border-radius: 9px;
+        }
       }
     `,
   ];
@@ -159,14 +205,16 @@ export class CalendarCard extends SeasonalCard {
     const language = this.hass?.language;
     return html`
       <div class="grid">
-        <span class="current-month" style="grid-column:${items.month + 1} / span 1; grid-row:1 / span ${items.rows.length + 1}"></span>
+        <div class="overlay"><span style="grid-column:${items.month}"></span></div>
         <span></span>
-        ${MONTHS.map(
-          month => html`<span class="head ${month === items.month ? 'current' : ''}"
-            ><span class="initial">${monthInitial(month, language)}</span
-            ><span class="short">${monthShort(month, language)}</span></span
-          >`,
-        )}
+        <div class="months">
+          ${MONTHS.map(
+            month => html`<span class="head ${month === items.month ? 'current' : ''}"
+              ><span class="initial">${monthInitial(month, language)}</span
+              ><span class="short">${monthShort(month, language)}</span></span
+            >`,
+          )}
+        </div>
         ${items.rows.map(
           row => html`
             <div class="item">
@@ -180,11 +228,13 @@ export class CalendarCard extends SeasonalCard {
               </div>
               ${row.band === 'unknown' ? html`<span class="unknown">${bandLabel('unknown', this.t)}</span>` : ''}
             </div>
-            ${MONTHS.map(
-              month => html`<span
-                class="cell ${row.months.includes(month) ? 'on' : ''} ${month === items.month ? 'current' : ''}"
-              ></span>`,
-            )}
+            <div class="track">
+              <div class="bars">
+                ${seasonRuns(row.months).map(
+                  ([start, end]) => html`<span class="bar" style="grid-column:${start} / ${end + 1}"></span>`,
+                )}
+              </div>
+            </div>
           `,
         )}
       </div>

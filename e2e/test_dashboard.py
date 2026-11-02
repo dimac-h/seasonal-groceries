@@ -59,7 +59,7 @@ def test_calendar_card_highlights_the_current_month(page: Page) -> None:
     card = page.locator("seasonal-groceries-calendar-card").first
 
     expect(card.locator(".head.current")).to_have_count(1)
-    expect(card.locator(".cell.on").first).to_be_visible()
+    expect(card.locator(".bar").first).to_be_visible()
 
 
 def test_match_card_offers_review_actions(page: Page) -> None:
