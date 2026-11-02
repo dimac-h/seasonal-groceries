@@ -4,7 +4,7 @@ Onboard the dev Home Assistant, add the integration and a test dashboard.
 Usage (after docker compose up and dev/seed_mealie.py):
     uv run python dev/setup_ha.py [--language nl|en]
 
-Creates the user dev / dev-password-123 and a dashboard at /lovelace/seasonal.
+Creates the user dev / dev and a dashboard at /lovelace/seasonal.
 """
 
 from __future__ import annotations
@@ -16,10 +16,12 @@ from pathlib import Path
 
 import aiohttp
 
+HTTP_OK = 200
 BASE = "http://localhost:8123"
+MEALIE_EXTERNAL_URL = "http://localhost:9925"
 CLIENT = f"{BASE}/"
 STATE = Path(__file__).parent / ".state"
-USER = {"username": "dev", "password": "dev-password-123"}
+USER = {"username": "dev", "password": "dev"}
 CARDS = [
     {"type": "custom:seasonal-groceries-now-card", "produce_type": "vegetable"},
     {"type": "custom:seasonal-groceries-now-card", "produce_type": "fruit"},
@@ -33,13 +35,21 @@ CARDS = [
         "produce_type": "fruit",
         "max_rows": 8,
     },
+    {"type": "custom:seasonal-groceries-recipes-card", "max_recipes": 5},
     {"type": "custom:seasonal-groceries-match-card"},
 ]
 
 
 async def access_token(session: aiohttp.ClientSession) -> str:
     async with session.get(f"{BASE}/api/onboarding") as response:
-        steps = {s["step"]: s["done"] for s in await response.json()}
+        # Home Assistant answers 404 once onboarding is complete.
+        steps = (
+            {s["step"]: s["done"] for s in await response.json()}
+            if response.status == HTTP_OK
+            else dict.fromkeys(
+                ("user", "core_config", "analytics", "integration"), True
+            )
+        )
     if not steps["user"]:
         async with session.post(
             f"{BASE}/api/onboarding/users",
@@ -86,26 +96,47 @@ async def add_integration(
     session: aiohttp.ClientSession, token: str, language: str
 ) -> None:
     headers = {"Authorization": f"Bearer {token}"}
-    async with session.get(
-        f"{BASE}/api/config/config_entries/entry", headers=headers
-    ) as response:
-        if any(e["domain"] == "seasonal_groceries" for e in await response.json()):
-            return
 
     async def step(url: str, body: dict) -> dict:
         async with session.post(url, json=body, headers=headers) as response:
             return await response.json()
 
-    flow_url = f"{BASE}/api/config/config_entries/flow"
-    flow = await step(flow_url, {"handler": "seasonal_groceries"})
-    flow = await step(f"{flow_url}/{flow['flow_id']}", {"language": language})
-    flow = await step(f"{flow_url}/{flow['flow_id']}", {"next_step_id": "manual"})
-    mealie_token = (STATE / "mealie-token").read_text()
+    async def find_entry() -> dict | None:
+        async with session.get(
+            f"{BASE}/api/config/config_entries/entry", headers=headers
+        ) as response:
+            entries = await response.json()
+        return next((e for e in entries if e["domain"] == "seasonal_groceries"), None)
+
+    entry = await find_entry()
+    if entry is None:
+        flow_url = f"{BASE}/api/config/config_entries/flow"
+        flow = await step(flow_url, {"handler": "seasonal_groceries"})
+        flow = await step(f"{flow_url}/{flow['flow_id']}", {"language": language})
+        flow = await step(f"{flow_url}/{flow['flow_id']}", {"next_step_id": "manual"})
+        mealie_token = (STATE / "mealie-token").read_text()
+        result = await step(
+            f"{flow_url}/{flow['flow_id']}",
+            {"url": "http://mealie:9000", "token": mealie_token, "verify_ssl": True},
+        )
+        print("integration:", result["type"], result.get("errors"))
+        entry = await find_entry()
+    if entry is None:
+        return
+
+    # Home Assistant reaches Mealie by its Docker hostname, which the browser cannot
+    # resolve, so recipe links need the address published on the host.
+    options_url = f"{BASE}/api/config/config_entries/options/flow"
+    flow = await step(options_url, {"handler": entry["entry_id"]})
     result = await step(
-        f"{flow_url}/{flow['flow_id']}",
-        {"url": "http://mealie:9000", "token": mealie_token, "verify_ssl": True},
+        f"{options_url}/{flow['flow_id']}",
+        {
+            "language": language,
+            "write_back_aliases": False,
+            "mealie_external_url": MEALIE_EXTERNAL_URL,
+        },
     )
-    print("integration:", result["type"], result.get("errors"))
+    print("options:", result.get("type"), result.get("errors"))
 
 
 async def save_dashboard(session: aiohttp.ClientSession, token: str) -> None:

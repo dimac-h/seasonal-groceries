@@ -18,7 +18,7 @@ from homeassistant.helpers.selector import (
     TextSelectorType,
 )
 
-from .const import DOMAIN, Language, language_for
+from .const import CONF_EXTERNAL_URL, DOMAIN, Language, language_for
 from .mealie import (
     MODE_INTEGRATION,
     MODE_MANUAL,
@@ -209,6 +209,10 @@ class SeasonalGroceriesOptionsFlow(config_entries.OptionsFlowWithReload):
                     vol.Required(
                         CONF_WRITE_BACK, default=current.get(CONF_WRITE_BACK, False)
                     ): BooleanSelector(),
+                    vol.Optional(
+                        CONF_EXTERNAL_URL,
+                        description={"suggested_value": current.get(CONF_EXTERNAL_URL)},
+                    ): TextSelector(TextSelectorConfig(type=TextSelectorType.URL)),
                 }
             ),
         )

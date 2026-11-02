@@ -106,6 +106,28 @@ async def test_refresh_builds_ranked_recipes_and_queue(
     assert ranked == [("salade", 2, 2), ("soep", 2, 2), ("kiwi", 1, 1)]
 
 
+async def test_recipe_lookup_and_mealie_url_after_refresh(
+    hass: HomeAssistant, freezer: FrozenDateTimeFactory
+) -> None:
+    freezer.move_to("2026-10-15 12:00:00+00:00")
+    coordinator, _ = await _coordinator(hass)
+
+    await coordinator.async_refresh()
+
+    assert coordinator.mealie_url == "http://m"
+    assert coordinator.recipe("soep") is RECIPES[0]
+    assert coordinator.recipe("bestaat-niet") is None
+
+
+async def test_mealie_url_is_none_without_mealie(hass: HomeAssistant) -> None:
+    coordinator, _ = await _coordinator(hass, mealie={"mode": "none"})
+
+    await coordinator.async_refresh()
+
+    assert coordinator.mealie_url is None
+    assert coordinator.recipe("soep") is None
+
+
 async def test_queue_contains_unconfirmed_fuzzy_and_unreviewed(
     hass: HomeAssistant, freezer: FrozenDateTimeFactory
 ) -> None:

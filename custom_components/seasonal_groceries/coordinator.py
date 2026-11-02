@@ -13,7 +13,7 @@ from homeassistant.helpers.event import async_track_time_change
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
 
-from .const import DOMAIN, Language
+from .const import CONF_EXTERNAL_URL, DOMAIN, Language
 from .corrections import Correction, ingredient_key
 from .dataset import Dataset, load_dataset
 from .matching import match_ingredient
@@ -27,7 +27,12 @@ if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
 
     from .corrections import CorrectionsStore
-    from .mealie import MealieFood, MealieIngredient, MealieRecipe
+    from .mealie import (
+        MealieCredentials,
+        MealieFood,
+        MealieIngredient,
+        MealieRecipe,
+    )
 
 _LOGGER = logging.getLogger(__name__)
 UPDATE_INTERVAL = timedelta(minutes=30)
@@ -73,7 +78,8 @@ class SeasonalGroceriesCoordinator(DataUpdateCoordinator[CoordinatorData]):
         )
         self.corrections = corrections
         self._foods: dict[str, MealieFood] = {}
-        self._recipes: list[MealieRecipe] = []
+        self._recipes: dict[str, MealieRecipe] = {}
+        self.mealie_credentials: MealieCredentials | None = None
         self._datasets: dict[Language, Dataset] = {}
         self._unsub_month: Callable[[], None] | None = None
         self._ingredients: dict[str, MealieIngredient] = {}
@@ -108,6 +114,28 @@ class SeasonalGroceriesCoordinator(DataUpdateCoordinator[CoordinatorData]):
         """Whether the entry has a Mealie connection (it may still be failing)."""
         return self.settings.get("mealie", {}).get("mode", "none") != "none"
 
+    def recipe(self, slug: str) -> MealieRecipe | None:
+        """Return the cached Mealie recipe with this slug, if there is one."""
+        return self._recipes.get(slug)
+
+    @property
+    def mealie_url(self) -> str | None:
+        """The address HA uses to reach Mealie."""
+        return self.mealie_credentials.url if self.mealie_credentials else None
+
+    @property
+    def mealie_link_url(self) -> str | None:
+        """The address browsers use to open Mealie (the optional external URL)."""
+        return self.settings.get(CONF_EXTERNAL_URL) or self.mealie_url
+
+    async def async_recipe_image(self, slug: str) -> tuple[bytes, str] | None:
+        """Fetch a recipe's image from Mealie, or None when there is none."""
+        recipe = self.recipe(slug)
+        if recipe is None or not recipe.image or self.mealie_credentials is None:
+            return None
+        client = client_for(self.hass, self.mealie_credentials)
+        return await client.get_image(recipe)
+
     @property
     def month(self) -> int:
         """The current month in Home Assistant's timezone."""
@@ -119,11 +147,12 @@ class SeasonalGroceriesCoordinator(DataUpdateCoordinator[CoordinatorData]):
         try:
             credentials = credentials_for(self.hass, mealie)
             if credentials is None:
-                self._foods, self._recipes = {}, []
+                self._foods, self._recipes = {}, {}
+                self.mealie_credentials = None
                 return self._build(mealie_configured=False)
             client = client_for(self.hass, credentials)
             foods = await client.get_foods()
-            recipes = await client.get_recipes(self._recipes)
+            recipes = await client.get_recipes(list(self._recipes.values()))
         except MealieAuthError as err:
             msg = "Mealie rejected the API token"
             raise ConfigEntryAuthFailed(msg) from err
@@ -131,7 +160,8 @@ class SeasonalGroceriesCoordinator(DataUpdateCoordinator[CoordinatorData]):
             msg = f"Mealie unavailable: {err}"
             raise UpdateFailed(msg) from err
         self._foods = {food.id: food for food in foods}
-        self._recipes = recipes
+        self._recipes = {recipe.slug: recipe for recipe in recipes}
+        self.mealie_credentials = credentials
         return self._build(mealie_configured=True)
 
     @callback
@@ -151,7 +181,7 @@ class SeasonalGroceriesCoordinator(DataUpdateCoordinator[CoordinatorData]):
         cache: dict[str, tuple[MealieIngredient, Resolved]] = {}
         scores: list[RecipeScore] = []
         queue: dict[str, QueueEntry] = {}
-        for recipe in self._recipes:
+        for recipe in self._recipes.values():
             resolutions = []
             for ingredient in recipe.ingredients:
                 key = ingredient_key(ingredient)

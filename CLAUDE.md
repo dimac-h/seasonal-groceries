@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-Seasonal Groceries: a Home Assistant custom integration (`custom_components/seasonal_groceries`) that knows which Dutch vegetables and fruit are in season (with pesticide levels), optionally ranks Mealie recipes by how seasonal their ingredients are, and ships three Lovelace cards. Distributed via HACS.
+Seasonal Groceries: a Home Assistant custom integration (`custom_components/seasonal_groceries`) that knows which Dutch vegetables and fruit are in season (with pesticide levels), optionally ranks Mealie recipes by how seasonal their ingredients are, and ships four Lovelace cards. Distributed via HACS.
 
 ## Development
 
@@ -26,7 +26,7 @@ Data flow: bundled dataset + Mealie recipes â†’ `SeasonalGroceriesCoordinator` â
 - `corrections.py` persists user decisions (confirm/wrong/change/ignore/no_season) in an HA `Store`, keyed by Mealie food or normalised text (`ingredient_key`).
 - `coordinator.py` ties it together: polls every 30 min, builds `CoordinatorData` (ranked recipes plus the review queue of unconfirmed matches), recomputes on corrections and at midnight (month rollover), and can write confirmed corrections back to Mealie as aliases. A Mealie outage must not fail setup; the seasonal part keeps working.
 - `websocket_api.py` registers `seasonal_groceries/*` commands once in `async_setup`. The cards' `subscribe` command also keeps the coordinator polling while a dashboard is open. Commands are available to non-admins except `review_resolve`.
-- `__init__.py` registers the static path and `add_extra_js_url` so one bundle (`frontend/src/main.ts`, which registers all three cards) loads on every dashboard.
+- `__init__.py` registers the static path and `add_extra_js_url` so one bundle (`frontend/src/main.ts`, which registers all four cards) loads on every dashboard.
 - Frontend: `base-card.ts`/`base-editor.ts` hold shared card logic, `api.ts` wraps the WebSocket commands, `i18n.ts` loads `frontend/src/translations/<lang>.json` (separate from `translations/*.json` for HA's setup screens; `strings.json` is the source for the latter). `register.ts` delays registration until `home-assistant` is defined, which works around a load-order race; see `FUTURE_WORK.md` before touching it.
 
 ## Frontend Design Language
