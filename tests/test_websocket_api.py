@@ -194,6 +194,21 @@ async def test_recipes_ranked(
     assert len(limited["result"]["recipes"]) == 1
 
 
+async def test_recipes_without_in_season_produce_are_left_out(
+    hass: HomeAssistant, ws: MockHAClientWebSocket, client: MagicMock
+) -> None:
+    client.get_recipes = AsyncMock(
+        return_value=[*RECIPES, _recipe("zomer", _text("aardbei"))]
+    )
+    await _setup(hass)
+
+    response = await _call(ws, type="seasonal_groceries/recipes")
+
+    slugs = [r["slug"] for r in response["result"]["recipes"]]
+    assert "zomer" not in slugs
+    assert "leeg" not in slugs
+
+
 async def test_recipes_without_mealie_configured(
     hass: HomeAssistant, ws: MockHAClientWebSocket
 ) -> None:
@@ -409,7 +424,7 @@ async def test_resolve_change_applies_to_all_recipes_sharing_ingredient(
         r["slug"]: (r["in_season"], r["total"]) for r in response["result"]["recipes"]
     }
     assert ranked["salade"] == (1, 2)
-    assert ranked["pasta"] == (0, 2)
+    assert "pasta" not in ranked  # nothing in season: left out of the response
     assert "food:f-tom" not in await _queue_keys(ws)
 
 

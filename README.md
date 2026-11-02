@@ -16,7 +16,7 @@
 
 - **In season now:** a list of the vegetables or fruit in season this month.
 - **Year calendar:** which month each item is in season.
-- **Recipes (optional):** your Mealie recipes sorted by the share of their fruit and vegetables that is in season, each with its image, description, tags, rating and favourite heart, linking to the recipe in Mealie.
+- **Recipes (optional):** your Mealie recipes sorted by the share of their fruit and vegetables that is in season (recipes with nothing in season are left out), each with its image, description, tags, rating and favourite heart, linking to the recipe in Mealie.
 - **Match review:** confirm or fix how a Mealie ingredient is matched to a seasonal item. Names and aliases you already have in Mealie are used first.
 
 

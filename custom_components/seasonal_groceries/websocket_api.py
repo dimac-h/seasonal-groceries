@@ -64,10 +64,12 @@ def _mealie_status(coordinator: SeasonalGroceriesCoordinator) -> dict[str, bool]
 def _recipe_rows(
     coordinator: SeasonalGroceriesCoordinator, scored: Any, limit: int | None
 ) -> list[dict[str, Any]]:
-    """Build rows, leaving out ranked recipes that are no longer cached."""
+    """Build rows, leaving out recipes without in-season produce or no longer cached."""
     link_url = coordinator.mealie_link_url
     rows_: list[dict[str, Any]] = []
     for item in scored:
+        if item.in_season == 0:
+            continue
         recipe = coordinator.recipe(item.slug)
         if recipe is None or link_url is None:
             continue
