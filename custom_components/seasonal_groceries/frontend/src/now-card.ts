@@ -4,8 +4,8 @@ import { customElement } from './register';
 import { mdiSprout } from '@mdi/js';
 import './credits-footer';
 import './now-card-editor';
-import { getItems, getRecipes } from './api';
-import type { ItemsResponse, MealieStatus, ProduceType, RecipeRow } from './api';
+import { getItems } from './api';
+import type { ItemsResponse, ProduceType } from './api';
 import { SeasonalCard } from './base-card';
 import { monthName } from './i18n';
 import { bandColor, bandLabel } from './pesticide';
@@ -15,26 +15,13 @@ export interface NowCardConfig {
   type: string;
   title?: string;
   produce_type: ProduceType;
-  max_recipes?: number;
 }
-
-export const DEFAULT_MAX_RECIPES = 5;
 
 @customElement('seasonal-groceries-now-card')
 export class NowCard extends SeasonalCard {
   static styles = [
     sharedStyles,
     css`
-      .section-title {
-        margin-block: var(--ha-space-6, 24px) var(--ha-space-2, 8px);
-        font-weight: 500;
-        color: var(--primary-text-color);
-      }
-      .score {
-        color: var(--secondary-text-color);
-        font-size: 12px;
-        white-space: nowrap;
-      }
       ha-alert {
         display: block;
         margin-block-end: var(--ha-space-4, 16px);
@@ -44,30 +31,23 @@ export class NowCard extends SeasonalCard {
 
   @state() private _config: NowCardConfig = { type: 'custom:seasonal-groceries-now-card', produce_type: 'vegetable' };
   @state() private _items?: ItemsResponse;
-  @state() private _recipes: RecipeRow[] = [];
-  @state() private _mealie: MealieStatus = { mealie_configured: false, mealie_ok: true };
 
   setConfig(config: NowCardConfig): void {
     if (!config) throw new Error('Invalid configuration');
     if (config.produce_type !== 'vegetable' && config.produce_type !== 'fruit') {
       throw new Error('produce_type must be "vegetable" or "fruit"');
     }
-    this._config = { max_recipes: DEFAULT_MAX_RECIPES, ...config };
+    // An old `max_recipes` key from before the recipes moved to their own card is ignored.
+    this._config = { ...config };
     if (this.hass) void this._refresh();
   }
 
   protected async load(): Promise<void> {
-    const [items, recipes] = await Promise.all([
-      getItems(this.hass, this._config.produce_type, 'now'),
-      getRecipes(this.hass, this._config.max_recipes ?? DEFAULT_MAX_RECIPES),
-    ]);
-    this._items = items;
-    this._recipes = recipes.recipes;
-    this._mealie = { mealie_configured: recipes.mealie_configured, mealie_ok: recipes.mealie_ok };
+    this._items = await getItems(this.hass, this._config.produce_type, 'now');
   }
 
   getCardSize(): number {
-    return 2 + Math.ceil((this._items?.rows.length ?? 5) / 2) + this._recipes.length;
+    return 2 + Math.ceil((this._items?.rows.length ?? 5) / 2);
   }
 
   static getConfigElement(): HTMLElement {
@@ -75,7 +55,7 @@ export class NowCard extends SeasonalCard {
   }
 
   static getStubConfig(): NowCardConfig {
-    return { type: 'custom:seasonal-groceries-now-card', produce_type: 'vegetable', max_recipes: DEFAULT_MAX_RECIPES };
+    return { type: 'custom:seasonal-groceries-now-card', produce_type: 'vegetable' };
   }
 
   private _renderItems() {
@@ -93,28 +73,6 @@ export class NowCard extends SeasonalCard {
     );
   }
 
-  private _renderRecipes() {
-    if (!this._mealie.mealie_configured) return '';
-    return html`
-      <div class="section-title">${this.t('now.recipes')}</div>
-      ${!this._mealie.mealie_ok
-        ? html`<ha-alert alert-type="warning">${this.t('common.mealie_error')}</ha-alert>`
-        : ''}
-      ${this._recipes.length === 0 && this._mealie.mealie_ok
-        ? html`<div class="muted">${this.t('now.no_recipes')}</div>`
-        : this._recipes.map(
-            recipe => html`
-              <div class="row">
-                <span class="name">${recipe.name}</span>
-                <span class="score">
-                  ${this.t('now.recipe_score', { in_season: recipe.in_season, total: recipe.total })}
-                </span>
-              </div>
-            `,
-          )}
-    `;
-  }
-
   render() {
     const type = this._config.produce_type;
     const title = this._config.title ?? `${this.t('now.title')} · ${this.t(`common.${type}`)}`;
@@ -129,7 +87,6 @@ export class NowCard extends SeasonalCard {
         </div>
         ${this._failed ? html`<ha-alert alert-type="error">${this.t('common.error')}</ha-alert>` : ''}
         ${this._items ? this._renderItems() : html`<div class="muted">${this.t('common.loading')}</div>`}
-        ${this._renderRecipes()}
         ${this._items
           ? html`<sg-credits-footer
               .credits=${this._items.credits}
@@ -147,7 +104,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({
   type: 'seasonal-groceries-now-card',
   name: 'Seasonal Groceries: in season now',
-  description: 'Fruit or vegetables in season this month, with the most seasonal Mealie recipes',
+  description: 'Fruit or vegetables in season this month',
   preview: true,
   documentationURL: 'https://github.com/dimac-h/seasonal-groceries',
 });

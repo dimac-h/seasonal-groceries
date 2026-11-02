@@ -9,7 +9,6 @@ export class NowCardEditor extends SeasonalEditor<NowCardConfig> {
     return [
       { name: 'title', selector: { text: {} } },
       { name: 'produce_type', selector: produceTypeSelector(t) },
-      { name: 'max_recipes', selector: { number: { min: 1, max: 20, mode: 'box' } } },
     ];
   }
 
@@ -17,7 +16,6 @@ export class NowCardEditor extends SeasonalEditor<NowCardConfig> {
     return {
       title: t('editor.title'),
       produce_type: t('editor.produce_type'),
-      max_recipes: t('editor.max_recipes'),
     };
   }
 }
