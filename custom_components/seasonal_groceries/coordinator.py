@@ -74,6 +74,7 @@ class SeasonalGroceriesCoordinator(DataUpdateCoordinator[CoordinatorData]):
         self.corrections = corrections
         self._foods: dict[str, MealieFood] = {}
         self._recipes: list[MealieRecipe] = []
+        self.mealie_url: str | None = None
         self._datasets: dict[Language, Dataset] = {}
         self._unsub_month: Callable[[], None] | None = None
         self._ingredients: dict[str, MealieIngredient] = {}
@@ -108,6 +109,10 @@ class SeasonalGroceriesCoordinator(DataUpdateCoordinator[CoordinatorData]):
         """Whether the entry has a Mealie connection (it may still be failing)."""
         return self.settings.get("mealie", {}).get("mode", "none") != "none"
 
+    def recipe(self, slug: str) -> MealieRecipe | None:
+        """Return the cached Mealie recipe with this slug, if there is one."""
+        return next((r for r in self._recipes if r.slug == slug), None)
+
     @property
     def month(self) -> int:
         """The current month in Home Assistant's timezone."""
@@ -120,6 +125,7 @@ class SeasonalGroceriesCoordinator(DataUpdateCoordinator[CoordinatorData]):
             credentials = credentials_for(self.hass, mealie)
             if credentials is None:
                 self._foods, self._recipes = {}, []
+                self.mealie_url = None
                 return self._build(mealie_configured=False)
             client = client_for(self.hass, credentials)
             foods = await client.get_foods()
@@ -132,6 +138,7 @@ class SeasonalGroceriesCoordinator(DataUpdateCoordinator[CoordinatorData]):
             raise UpdateFailed(msg) from err
         self._foods = {food.id: food for food in foods}
         self._recipes = recipes
+        self.mealie_url = credentials.url
         return self._build(mealie_configured=True)
 
     @callback
