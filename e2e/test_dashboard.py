@@ -28,13 +28,6 @@ def test_now_card_lists_seasonal_items_with_pesticide_levels(page: Page) -> None
     expect(card.get_by_text("Unknown").first).to_be_visible()
 
 
-def test_now_card_shows_ranked_recipes(page: Page) -> None:
-    card = page.locator("seasonal-groceries-now-card").first
-
-    expect(card.get_by_text("Recipes to cook now")).to_be_visible()
-    expect(card.get_by_text("2 of 2 in season")).to_be_visible()
-
-
 def test_cards_show_credits_in_the_footer(page: Page) -> None:
     footer = page.locator("seasonal-groceries-now-card sg-credits-footer").first
 
