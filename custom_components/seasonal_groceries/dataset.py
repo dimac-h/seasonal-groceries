@@ -121,6 +121,11 @@ def load_dataset(language: Language, path: Path | None = None) -> Dataset:
         msg = "duplicate item keys"
         raise ValueError(msg)
 
+    for name, entry in raw["credits"].items():
+        if not entry["url"].startswith("https://"):
+            msg = f"credit {name} must link to an https URL"
+            raise ValueError(msg)
+
     credit_map = {
         name: Credit(
             label=entry["label"],

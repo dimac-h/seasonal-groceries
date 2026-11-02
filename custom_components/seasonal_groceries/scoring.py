@@ -71,10 +71,17 @@ def score_recipe(
     """Score a recipe; None when it has no produce ingredients."""
     months_by_key = {item.key: item.months for item in dataset.items}
     total = in_season = 0
+    seen: set[str] = set()
     for resolved in resolutions:
         if resolved.kind == "no_season":
             total += 1
-        elif resolved.kind == "item" and resolved.item_key in months_by_key:
+        elif (
+            resolved.kind == "item"
+            and resolved.item_key in months_by_key
+            and resolved.item_key not in seen
+        ):
+            # An item listed twice (say, tomato in the sauce and the salad) counts once.
+            seen.add(resolved.item_key)
             total += 1
             in_season += month in months_by_key[resolved.item_key]
     if total == 0:

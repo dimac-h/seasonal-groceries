@@ -51,10 +51,8 @@ export class MatchCard extends SeasonalCard {
   }
 
   protected async load(): Promise<void> {
-    const [queue, options] = await Promise.all([
-      getReviewQueue(this.hass),
-      this._options.length ? Promise.resolve(this._options) : getItemOptions(this.hass),
-    ]);
+    // Fetch the item names every time: they follow the grocery language, which can change.
+    const [queue, options] = await Promise.all([getReviewQueue(this.hass), getItemOptions(this.hass)]);
     this._entries = queue.entries;
     this._options = options;
     this._mealie = { mealie_configured: queue.mealie_configured, mealie_ok: queue.mealie_ok };

@@ -123,6 +123,12 @@ def test_out_of_season_item_counts_in_total_only() -> None:
     assert (score.in_season, score.total) == (1, 2)  # type: ignore[union-attr]
 
 
+def test_item_listed_twice_counts_once() -> None:
+    score = _score("pompoen", "pompoen", "aardbei")
+
+    assert (score.in_season, score.total) == (1, 2)  # type: ignore[union-attr]
+
+
 def test_rank_ratio_then_total_then_name() -> None:
     scores = [
         RecipeScore("a", "Bravo", 5, 5),
