@@ -55,7 +55,7 @@
    "recipeCategory": [],
    "tags": [],
    "tools": [],
-   "rating": null,
+   "rating": 5.0,
    "orgURL": null,
    "dateAdded": "2026-10-26",
    "dateUpdated": "2026-10-26T10:40:43.413022+00:00",
@@ -98,7 +98,7 @@
    "groupId": "2dc70085-dcd6-473f-9628-9cd64f46d6a5",
    "name": "Pompoensoep",
    "slug": "pompoensoep",
-   "image": null,
+   "image": "b6ep",
    "recipeServings": 0.0,
    "recipeYieldQuantity": 0.0,
    "recipeYield": null,
@@ -109,11 +109,22 @@
    "totalTimeSeconds": null,
    "prepTimeSeconds": null,
    "performTimeSeconds": null,
-   "description": "",
+   "description": "Een romige soep van pompoen en prei.\nPerfect voor een koude herfstavond.",
    "recipeCategory": [],
-   "tags": [],
+   "tags": [
+    {
+     "id": "a5843b33",
+     "name": "soep",
+     "slug": "soep"
+    },
+    {
+     "id": "b1",
+     "name": "herfst",
+     "slug": "herfst"
+    }
+   ],
    "tools": [],
-   "rating": null,
+   "rating": 2.35,
    "orgURL": null,
    "dateAdded": "2026-10-26",
    "dateUpdated": "2026-10-26T10:40:43.286529+00:00",
