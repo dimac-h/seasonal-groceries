@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, Any
 
@@ -17,6 +18,8 @@ if TYPE_CHECKING:
     from aiohttp import ClientSession
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant
+
+_LOGGER = logging.getLogger(__name__)
 
 MEALIE_DOMAIN = "mealie"
 MODE_NONE = "none"
@@ -104,14 +107,6 @@ def _parse_ingredient(raw: Mapping[str, Any]) -> MealieIngredient | None:
     return MealieIngredient(food_id=None, text=text) if text else None
 
 
-def image_url(base_url: str, recipe: MealieRecipe) -> str | None:
-    """Return the browser URL of the recipe image, or None without an image."""
-    if not recipe.image:
-        return None
-    root = base_url.rstrip("/")
-    return f"{root}/api/media/recipes/{recipe.id}/images/original.webp?v={recipe.image}"
-
-
 def recipe_url(base_url: str, recipe: MealieRecipe) -> str:
     """Return the Mealie web address that opens the recipe."""
     return f"{base_url.rstrip('/')}/g/{recipe.group_slug}/r/{recipe.slug}"
@@ -133,6 +128,7 @@ class MealieClient:
         *,
         params: Mapping[str, Any] | None = None,
         body: Mapping[str, Any] | None = None,
+        raw: bool = False,
     ) -> Any:
         try:
             async with self._session.request(
@@ -150,6 +146,8 @@ class MealieClient:
                 if response.status >= _HTTP_ERROR:
                     msg = f"{path}: HTTP {response.status}"
                     raise MealieConnectionError(msg)
+                if raw:
+                    return await response.read(), response.content_type
                 return await response.json()
         except (ClientError, TimeoutError, ValueError) as err:
             msg = f"{path}: {err}"
@@ -185,17 +183,27 @@ class MealieClient:
             for raw in await self._paged("/api/foods")
         ]
 
+    async def get_image(self, recipe: MealieRecipe) -> tuple[bytes, str]:
+        """Return the bytes and content type of a recipe's image."""
+        path = f"/api/media/recipes/{recipe.id}/images/min-original.webp"
+        return await self._request("GET", path, raw=True)
+
     async def _get_user_ratings(self) -> dict[str, tuple[float | None, bool]]:
-        """Return the token user's (rating, favourite) per recipe id."""
-        body = await self._request("GET", "/api/users/self/ratings")
+        """
+        Return the token user's (rating, favourite) per recipe id.
+
+        Ratings only decorate the cards, so a Mealie that cannot give them (no such
+        endpoint, a token without access) yields none instead of failing the recipes.
+        """
         try:
+            body = await self._request("GET", "/api/users/self/ratings")
             return {
                 entry["recipeId"]: (entry.get("rating"), bool(entry.get("isFavorite")))
                 for entry in body["ratings"]
             }
-        except (KeyError, TypeError) as err:
-            msg = f"unexpected ratings data: {err}"
-            raise MealieConnectionError(msg) from err
+        except (MealieError, KeyError, TypeError) as err:
+            _LOGGER.debug("Mealie ratings unavailable: %s", err)
+            return {}
 
     async def get_recipes(
         self, cached: Sequence[MealieRecipe] = ()
@@ -209,8 +217,9 @@ class MealieClient:
         A recipe deleted meanwhile is skipped.
         """
         known = {recipe.slug: recipe for recipe in cached}
-        group_slug = str(
-            (await self._request("GET", "/api/users/self")).get("groupSlug")
+        user = await self._request("GET", "/api/users/self")
+        group_slug = (
+            str(user.get("groupSlug") or "home") if isinstance(user, dict) else "home"
         )
         ratings = await self._get_user_ratings()
         summaries = await self._paged("/api/recipes")

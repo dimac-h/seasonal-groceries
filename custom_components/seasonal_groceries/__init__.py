@@ -14,6 +14,7 @@ from homeassistant.helpers import config_validation as cv
 from .const import CARD_MODULE_URL, DOMAIN, FRONTEND_PATH
 from .coordinator import SeasonalGroceriesCoordinator
 from .corrections import CorrectionsStore
+from .views import RecipeImageView
 from .websocket_api import async_register_commands
 
 if TYPE_CHECKING:
@@ -29,6 +30,7 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Register the WebSocket API; entries are set up separately."""
     async_register_commands(hass)
+    hass.http.register_view(RecipeImageView())
     return True
 
 

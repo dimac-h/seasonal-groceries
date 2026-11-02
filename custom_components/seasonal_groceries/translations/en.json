@@ -50,10 +50,12 @@
         "title": "Seasonal Groceries options",
         "data": {
           "language": "Grocery language",
-          "write_back_aliases": "Save corrections as aliases in Mealie"
+          "write_back_aliases": "Save corrections as aliases in Mealie",
+          "mealie_external_url": "Mealie address for recipe links"
         },
         "data_description": {
-          "write_back_aliases": "When you correct a match in the review card, also add the ingredient text as an alias on the Mealie food."
+          "write_back_aliases": "When you correct a match in the review card, also add the ingredient text as an alias on the Mealie food.",
+          "mealie_external_url": "Only needed when the address Home Assistant uses for Mealie does not work in your browser, for example http://mealie:9000. Leave empty to use that address."
         }
       }
     }

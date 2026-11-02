@@ -9,6 +9,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from homeassistant.config_entries import ConfigEntryState
+from homeassistant.setup import async_setup_component
 from pytest_homeassistant_custom_component.common import (
     MockConfigEntry,
 )
@@ -28,6 +29,7 @@ if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
     from pytest_homeassistant_custom_component.plugins import FrozenDateTimeFactory
     from pytest_homeassistant_custom_component.typing import (
+        ClientSessionGenerator,
         MockHAClientWebSocket,
         WebSocketGenerator,
     )
@@ -91,6 +93,9 @@ async def ws(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator
 ) -> MockHAClientWebSocket:
     """One authenticated WebSocket connection per test."""
+    # The integration registers its HTTP view in `async_setup`, which must run
+    # before the test client starts and freezes the router.
+    assert await async_setup_component(hass, DOMAIN, {})
     return await hass_ws_client(hass)
 
 
@@ -231,7 +236,7 @@ async def test_recipes_include_display_fields(
             "name": "Soep",
             "in_season": 1,
             "total": 1,
-            "image_url": "http://m/api/media/recipes/rid/images/original.webp?v=b6ep",
+            "image_url": response["result"]["recipes"][0]["image_url"],
             "url": "http://m/g/home/r/soep",
             "description": "Romig.\nMet prei.",
             "tags": ["soep", "herfst"],
@@ -239,7 +244,47 @@ async def test_recipes_include_display_fields(
             "rating": 3.5,
         }
     ]
+    image_url = response["result"]["recipes"][0]["image_url"]
+    assert image_url.startswith("/api/seasonal_groceries/recipe_image/soep?authSig=")
     assert "secret-token" not in json.dumps(response)
+
+
+async def test_recipe_image_is_proxied_through_a_signed_path(
+    hass: HomeAssistant,
+    ws: MockHAClientWebSocket,
+    client: MagicMock,
+    hass_client_no_auth: ClientSessionGenerator,
+) -> None:
+    client.get_recipes = AsyncMock(
+        return_value=[replace(_recipe("soep", _text("pompoen")), id="rid", image="v")]
+    )
+    client.get_image = AsyncMock(return_value=(b"img", "image/webp"))
+    await _setup(hass)
+    response = await _call(ws, type="seasonal_groceries/recipes")
+    path = response["result"]["recipes"][0]["image_url"]
+    http = await hass_client_no_auth()
+
+    assert (await http.get("/api/seasonal_groceries/recipe_image/soep")).status == 401
+    image = await http.get(path)
+
+    assert image.status == 200
+    assert image.content_type == "image/webp"
+    assert await image.read() == b"img"
+
+
+async def test_recipes_link_uses_the_external_url_option(
+    hass: HomeAssistant, ws: MockHAClientWebSocket, client: MagicMock
+) -> None:
+    client.get_recipes = AsyncMock(
+        return_value=[replace(_recipe("soep", _text("pompoen")), group_slug="home")]
+    )
+    await _setup(hass, options={"mealie_external_url": "https://mealie.example/"})
+
+    response = await _call(ws, type="seasonal_groceries/recipes")
+
+    assert response["result"]["recipes"][0]["url"] == (
+        "https://mealie.example/g/home/r/soep"
+    )
 
 
 async def test_recipes_with_missing_display_fields(
@@ -265,7 +310,7 @@ async def test_recipe_missing_from_the_cache_is_left_out(
     hass: HomeAssistant, ws: MockHAClientWebSocket, client: MagicMock
 ) -> None:
     entry = await _setup(hass)
-    entry.runtime_data._recipes = []  # noqa: SLF001 - ranked data outlived the cache
+    entry.runtime_data._recipes = {}  # noqa: SLF001 - ranked data outlived the cache
 
     response = await _call(ws, type="seasonal_groceries/recipes")
 

@@ -72,7 +72,7 @@ max_rows: 15              # row limit, applied after sorting
 type: custom:seasonal-groceries-match-card # to confirm matches, otherwise ingredients are ignored
 ```
 
-The recipes card shows the rating and the favourite heart of the user the Mealie API token belongs to (the rating in Mealie's own recipe list is an average over all users, so it is not used). Recipe images and links use the address Home Assistant uses to reach Mealie: if that is an address your browser cannot reach, such as a Docker-internal hostname, images show a placeholder and links do not open.
+The recipes card shows the rating and the favourite heart of the user the Mealie API token belongs to (the rating in Mealie's own recipe list is an average over all users, so it is not used). Recipe images are fetched from Mealie by Home Assistant and served through it, so they work even when your browser cannot reach Mealie. Recipe links open Mealie in your browser and use the address Home Assistant uses to reach Mealie; if that is an address your browser cannot reach, such as a Docker-internal hostname, set *Mealie address for recipe links* in the integration options.
 
 ## Current data sources
 

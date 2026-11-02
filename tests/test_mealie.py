@@ -27,7 +27,6 @@ from custom_components.seasonal_groceries.mealie import (
     credentials_for,
     credentials_from_entry,
     discover_mealie_entries,
-    image_url,
     recipe_url,
 )
 
@@ -58,11 +57,13 @@ def _client(hass: HomeAssistant) -> MealieClient:
 def _mock_user(
     aioclient_mock: AiohttpClientMocker,
     ratings: list[dict[str, Any]] | None = None,
+    ratings_status: int = 200,
 ) -> None:
     """Mock the token owner and their ratings and favourites."""
     aioclient_mock.get(f"{URL}/api/users/self", json={"id": "u", "groupSlug": "home"})
     aioclient_mock.get(
         f"{URL}/api/users/self/ratings",
+        status=ratings_status,
         json={
             "ratings": OWNER_RATINGS if ratings is None else ratings,
         },
@@ -72,8 +73,9 @@ def _mock_user(
 def _mock_recipes(
     aioclient_mock: AiohttpClientMocker,
     ratings: list[dict[str, Any]] | None = None,
+    ratings_status: int = 200,
 ) -> None:
-    _mock_user(aioclient_mock, ratings)
+    _mock_user(aioclient_mock, ratings, ratings_status)
     listing = _fixture("mealie_recipes_list.json")
     aioclient_mock.get(f"{URL}/api/recipes", json=listing)
     for item in listing["items"]:
@@ -149,14 +151,40 @@ async def test_get_recipes_marks_favourites_and_owner_rating(
     )
 
 
-async def test_failing_ratings_request_is_a_connection_error(
+async def test_failing_ratings_request_leaves_the_recipes_without_ratings(
     hass: HomeAssistant, aioclient_mock: AiohttpClientMocker
 ) -> None:
-    aioclient_mock.get(f"{URL}/api/users/self", json={"groupSlug": "home"})
-    aioclient_mock.get(f"{URL}/api/users/self/ratings", status=500)
+    _mock_recipes(aioclient_mock, ratings_status=404)
 
-    with pytest.raises(MealieConnectionError):
-        await _client(hass).get_recipes()
+    recipes = await _client(hass).get_recipes()
+
+    assert recipes
+    assert all(r.rating is None and not r.favorite for r in recipes)
+
+
+async def test_missing_group_slug_falls_back_to_home(
+    hass: HomeAssistant, aioclient_mock: AiohttpClientMocker
+) -> None:
+    _mock_recipes(aioclient_mock)
+    aioclient_mock.get(f"{URL}/api/users/self", json={"id": "u"})
+
+    recipes = await _client(hass).get_recipes()
+
+    assert {r.group_slug for r in recipes} == {"home"}
+
+
+async def test_get_image_returns_bytes_and_content_type(
+    hass: HomeAssistant, aioclient_mock: AiohttpClientMocker
+) -> None:
+    aioclient_mock.get(
+        f"{URL}/api/media/recipes/abc/images/min-original.webp",
+        content=b"img",
+        headers={"Content-Type": "image/webp"},
+    )
+    recipe = MealieRecipe(slug="x", name="X", ingredients=(), id="abc", image="v")
+
+    assert await _client(hass).get_image(recipe) == (b"img", "image/webp")
+    assert aioclient_mock.mock_calls[0][3]["Authorization"] == "Bearer secret-token"
 
 
 async def test_display_fields_refresh_even_when_the_recipe_is_cached(
@@ -191,24 +219,10 @@ async def test_display_fields_refresh_even_when_the_recipe_is_cached(
         ("https://h/mealie/", "https://h/mealie"),
     ],
 )
-def test_image_url_and_recipe_url_handle_slash_and_subpath(
-    base: str, expected_root: str
-) -> None:
-    recipe = MealieRecipe(
-        slug="soep",
-        name="Soep",
-        ingredients=(),
-        id="abc",
-        image="b6ep",
-        group_slug="home",
-    )
+def test_recipe_url_handles_slash_and_subpath(base: str, expected_root: str) -> None:
+    recipe = MealieRecipe(slug="soep", name="Soep", ingredients=(), group_slug="home")
 
-    assert (
-        image_url(base, recipe)
-        == f"{expected_root}/api/media/recipes/abc/images/original.webp?v=b6ep"
-    )
     assert recipe_url(base, recipe) == f"{expected_root}/g/home/r/soep"
-    assert image_url(base, MealieRecipe(slug="x", name="X", ingredients=())) is None
 
 
 async def test_get_recipes_sends_bearer_token(
