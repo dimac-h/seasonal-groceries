@@ -16,6 +16,7 @@ export interface CalendarCardConfig {
   title?: string;
   produce_type: ProduceType;
   max_rows?: number;
+  hide_unknown?: boolean;
 }
 
 export const DEFAULT_MAX_ROWS = 15;
@@ -97,12 +98,10 @@ export class CalendarCard extends SeasonalCard {
   }
 
   protected async load(): Promise<void> {
-    this._items = await getItems(
-      this.hass,
-      this._config.produce_type,
-      'calendar',
-      this._config.max_rows ?? DEFAULT_MAX_ROWS,
-    );
+    this._items = await getItems(this.hass, this._config.produce_type, 'calendar', {
+      maxRows: this._config.max_rows ?? DEFAULT_MAX_ROWS,
+      hideUnknown: this._config.hide_unknown,
+    });
   }
 
   getCardSize(): number {

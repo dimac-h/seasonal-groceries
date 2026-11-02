@@ -34,12 +34,13 @@ def band_for(item: Item, cutoffs: Mapping[ProduceType, Cutoffs]) -> Band:
     return "red"
 
 
-def rows(
+def rows(  # noqa: PLR0913
     dataset: Dataset,
     produce_type: ProduceType,
     month: int,
     *,
     only_in_season: bool = False,
+    hide_unknown: bool = False,
     max_rows: int | None = None,
 ) -> list[Row]:
     """Items of one type: in season first, fewest residues first, unknown last."""
@@ -54,6 +55,8 @@ def rows(
     ]
     if only_in_season:
         result = [row for row in result if row.in_season]
+    if hide_unknown:
+        result = [row for row in result if row.band != "unknown"]
     result.sort(
         key=lambda row: (
             not row.in_season,
