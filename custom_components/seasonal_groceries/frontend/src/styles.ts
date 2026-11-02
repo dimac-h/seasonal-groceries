@@ -6,6 +6,9 @@ export const sharedStyles = css`
     display: block;
   }
   ha-card {
+    box-sizing: border-box;
+    height: 100%;
+    overflow: auto;
     padding: var(--ha-space-4, 16px);
   }
   .header {

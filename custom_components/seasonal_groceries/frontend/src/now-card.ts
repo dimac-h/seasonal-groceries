@@ -53,6 +53,10 @@ export class NowCard extends SeasonalCard {
     return 2 + Math.ceil((this._items?.rows.length ?? 5) / 2);
   }
 
+  getGridOptions() {
+    return { columns: 6, rows: 'auto', min_columns: 3, min_rows: 2 };
+  }
+
   static getConfigElement(): HTMLElement {
     return document.createElement('seasonal-groceries-now-card-editor');
   }
@@ -94,7 +98,6 @@ export class NowCard extends SeasonalCard {
           ? html`<sg-credits-footer
               .credits=${this._items.credits}
               .dataAsOf=${this._items.data_as_of}
-              .provisional=${this._items.provisional_cutoffs.filter(p => p === type)}
               .language=${this.hass?.language ?? 'en'}
             ></sg-credits-footer>`
           : ''}
