@@ -57,33 +57,31 @@ def _mealie_status(coordinator: SeasonalGroceriesCoordinator) -> dict[str, bool]
     }
 
 
-def _recipe_row(
-    coordinator: SeasonalGroceriesCoordinator, scored: Any
-) -> dict[str, Any]:
-    row = {
-        "slug": scored.slug,
-        "name": scored.name,
-        "in_season": scored.in_season,
-        "total": scored.total,
-        "image_url": None,
-        "url": None,
-        "description": "",
-        "tags": [],
-        "favorite": False,
-        "rating": None,
-    }
-    recipe = coordinator.recipe(scored.slug)
-    if recipe is None or coordinator.mealie_url is None:
-        return row
-    return {
-        **row,
-        "image_url": image_url(coordinator.mealie_url, recipe),
-        "url": recipe_url(coordinator.mealie_url, recipe),
-        "description": recipe.description,
-        "tags": list(recipe.tags),
-        "favorite": recipe.favorite,
-        "rating": recipe.rating,
-    }
+def _recipe_rows(
+    coordinator: SeasonalGroceriesCoordinator, scored: Any, limit: int | None
+) -> list[dict[str, Any]]:
+    """Build rows, leaving out ranked recipes that are no longer cached."""
+    base_url = coordinator.mealie_url
+    rows_: list[dict[str, Any]] = []
+    for item in scored:
+        recipe = coordinator.recipe(item.slug)
+        if recipe is None or base_url is None:
+            continue
+        rows_.append(
+            {
+                "slug": item.slug,
+                "name": item.name,
+                "in_season": item.in_season,
+                "total": item.total,
+                "image_url": image_url(base_url, recipe),
+                "url": recipe_url(base_url, recipe),
+                "description": recipe.description,
+                "tags": list(recipe.tags),
+                "favorite": recipe.favorite,
+                "rating": recipe.rating,
+            }
+        )
+    return rows_[:limit]
 
 
 @websocket_api.websocket_command(
@@ -163,9 +161,7 @@ async def ws_recipes(
     connection.send_result(
         msg["id"],
         {
-            "recipes": [
-                _recipe_row(coordinator, r) for r in recipes[: msg.get("limit")]
-            ],
+            "recipes": _recipe_rows(coordinator, recipes, msg.get("limit")),
             **_mealie_status(coordinator),
         },
     )

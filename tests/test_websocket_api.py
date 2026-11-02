@@ -261,6 +261,17 @@ async def test_recipes_with_missing_display_fields(
     assert row["url"] == "http://m/g/home/r/soep"
 
 
+async def test_recipe_missing_from_the_cache_is_left_out(
+    hass: HomeAssistant, ws: MockHAClientWebSocket, client: MagicMock
+) -> None:
+    entry = await _setup(hass)
+    entry.runtime_data._recipes = []  # noqa: SLF001 - ranked data outlived the cache
+
+    response = await _call(ws, type="seasonal_groceries/recipes")
+
+    assert response["result"]["recipes"] == []
+
+
 async def test_recipes_when_mealie_down(
     hass: HomeAssistant, ws: MockHAClientWebSocket, client: MagicMock
 ) -> None:
