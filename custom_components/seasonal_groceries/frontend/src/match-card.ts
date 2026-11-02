@@ -42,8 +42,9 @@ export class MatchCard extends SeasonalCard {
   @state() private _mealie?: MealieStatus;
   @state() private _changing = false;
   @state() private _picked = '';
-  @state() private _busy = false;
   @state() private _actionFailed = false;
+  // Entries whose resolve is still in flight; hidden so a refresh cannot bring them back.
+  private _pending = new Set<string>();
 
   setConfig(config: MatchCardConfig): void {
     if (!config) throw new Error('Invalid configuration');
@@ -53,7 +54,7 @@ export class MatchCard extends SeasonalCard {
   protected async load(): Promise<void> {
     // Fetch the item names every time: they follow the grocery language, which can change.
     const [queue, options] = await Promise.all([getReviewQueue(this.hass), getItemOptions(this.hass)]);
-    this._entries = queue.entries;
+    this._entries = queue.entries.filter(entry => !this._pending.has(entry.ingredient_key));
     this._options = options;
     this._mealie = { mealie_configured: queue.mealie_configured, mealie_ok: queue.mealie_ok };
   }
@@ -83,17 +84,20 @@ export class MatchCard extends SeasonalCard {
   }
 
   private async _act(entry: QueueEntry, action: ResolveAction, itemKey?: string): Promise<void> {
-    this._busy = true;
+    // Show the next entry at once; the server call (and any Mealie write-back) finishes in the background.
+    const key = entry.ingredient_key;
     this._actionFailed = false;
+    this._changing = false;
+    this._picked = '';
+    this._pending.add(key);
+    this._entries = this._entries.filter(e => e.ingredient_key !== key);
     try {
-      await resolveEntry(this.hass, entry.ingredient_key, action, itemKey);
-      this._changing = false;
-      this._picked = '';
-      await this._refresh();
+      await resolveEntry(this.hass, key, action, itemKey);
     } catch {
       this._actionFailed = true;
     } finally {
-      this._busy = false;
+      this._pending.delete(key);
+      await this._refresh();
     }
   }
 
@@ -124,7 +128,7 @@ export class MatchCard extends SeasonalCard {
             appearance="filled"
             variant="brand"
             size="m"
-            ?disabled=${!this._picked || this._busy}
+            ?disabled=${!this._picked}
             @click=${() => this._act(entry, 'change', this._picked)}
             >${this.t('match.save')}</ha-button
           >
@@ -144,7 +148,7 @@ export class MatchCard extends SeasonalCard {
 
   private _renderEntry(entry: QueueEntry) {
     const suggestion = this._name(entry.current_item_key ?? entry.suggestions[0]);
-    const disabled = this._busy || !this._isAdmin;
+    const disabled = !this._isAdmin;
     return html`
       <div class="question">${this.t('match.question', { text: entry.text })}</div>
       <div class="muted">
