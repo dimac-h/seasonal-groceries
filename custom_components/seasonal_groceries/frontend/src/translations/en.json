@@ -38,5 +38,6 @@
   "editor.title": "Title",
   "editor.produce_type": "Show",
   "editor.max_recipes": "Number of recipes",
-  "editor.max_rows": "Maximum number of rows"
+  "editor.max_rows": "Maximum number of rows",
+  "editor.hide_unknown": "Hide items with unknown pesticide level"
 }

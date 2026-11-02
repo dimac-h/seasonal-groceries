@@ -15,6 +15,7 @@ export interface NowCardConfig {
   type: string;
   title?: string;
   produce_type: ProduceType;
+  hide_unknown?: boolean;
 }
 
 @customElement('seasonal-groceries-now-card')
@@ -43,7 +44,9 @@ export class NowCard extends SeasonalCard {
   }
 
   protected async load(): Promise<void> {
-    this._items = await getItems(this.hass, this._config.produce_type, 'now');
+    this._items = await getItems(this.hass, this._config.produce_type, 'now', {
+      hideUnknown: this._config.hide_unknown,
+    });
   }
 
   getCardSize(): number {

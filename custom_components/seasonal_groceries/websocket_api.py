@@ -102,6 +102,7 @@ def _recipe_rows(
         vol.Required("produce_type"): vol.In(PRODUCE_TYPES),
         vol.Required("mode"): vol.In(["now", "calendar"]),
         vol.Optional("max_rows"): vol.All(int, vol.Range(min=1)),
+        vol.Optional("hide_unknown", default=False): bool,
     }
 )
 @websocket_api.async_response
@@ -118,6 +119,7 @@ async def ws_items(
         msg["produce_type"],
         month,
         only_in_season=msg["mode"] == "now",
+        hide_unknown=msg["hide_unknown"],
         max_rows=msg.get("max_rows"),
     )
     connection.send_result(
