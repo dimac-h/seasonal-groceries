@@ -260,7 +260,6 @@ export class CalendarCard extends SeasonalCard {
           ? html`<sg-credits-footer
               .credits=${this._items.credits}
               .dataAsOf=${this._items.data_as_of}
-              .provisional=${this._items.provisional_cutoffs.filter(p => p === type)}
               .language=${this.hass?.language ?? 'en'}
             ></sg-credits-footer>`
           : ''}
