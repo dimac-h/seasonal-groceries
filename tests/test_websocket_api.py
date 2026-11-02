@@ -158,6 +158,33 @@ async def test_items_calendar_respects_max_rows_and_type(
     assert all(len(r["months"]) >= 1 for r in rows)
 
 
+async def test_items_hide_unknown_leaves_out_unknown_band(
+    hass: HomeAssistant,
+    ws: MockHAClientWebSocket,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    freezer.move_to("2026-10-15 12:00:00+00:00")
+    await _setup(hass, mealie={"mode": "none"})
+
+    shown = await _call(
+        ws,
+        type="seasonal_groceries/items",
+        produce_type="vegetable",
+        mode="now",
+    )
+    hidden = await _call(
+        ws,
+        type="seasonal_groceries/items",
+        produce_type="vegetable",
+        mode="now",
+        hide_unknown=True,
+    )
+
+    assert any(r["band"] == "unknown" for r in shown["result"]["rows"])
+    assert hidden["result"]["rows"]
+    assert all(r["band"] != "unknown" for r in hidden["result"]["rows"])
+
+
 async def test_items_use_the_grocery_language(
     hass: HomeAssistant, ws: MockHAClientWebSocket
 ) -> None:

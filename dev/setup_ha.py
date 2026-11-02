@@ -24,7 +24,11 @@ STATE = Path(__file__).parent / ".state"
 USER = {"username": "dev", "password": "dev"}
 CARDS = [
     {"type": "custom:seasonal-groceries-now-card", "produce_type": "vegetable"},
-    {"type": "custom:seasonal-groceries-now-card", "produce_type": "fruit"},
+    {
+        "type": "custom:seasonal-groceries-now-card",
+        "produce_type": "fruit",
+        "hide_unknown": True,
+    },
     {
         "type": "custom:seasonal-groceries-calendar-card",
         "produce_type": "vegetable",
@@ -34,6 +38,7 @@ CARDS = [
         "type": "custom:seasonal-groceries-calendar-card",
         "produce_type": "fruit",
         "max_rows": 8,
+        "hide_unknown": True,
     },
     {"type": "custom:seasonal-groceries-recipes-card", "max_recipes": 5},
     {"type": "custom:seasonal-groceries-match-card"},

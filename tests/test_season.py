@@ -109,6 +109,22 @@ def test_rows_max_rows_cuts_after_sorting() -> None:
     ]
 
 
+def test_hide_unknown_drops_items_without_residues() -> None:
+    dataset = _dataset(_item("known", 0.1, {10}), _item("mystery", None, {10}))
+    assert [r.item.key for r in rows(dataset, "vegetable", 10)] == ["known", "mystery"]
+    assert [r.item.key for r in rows(dataset, "vegetable", 10, hide_unknown=True)] == [
+        "known"
+    ]
+
+
+def test_hide_unknown_applies_before_max_rows() -> None:
+    dataset = _dataset(
+        _item("a", 0.1, {10}), _item("mystery", None, {10}), _item("b", 1.0, {10})
+    )
+    result = rows(dataset, "vegetable", 10, hide_unknown=True, max_rows=2)
+    assert [r.item.key for r in result] == ["a", "b"]
+
+
 def test_only_in_season_excludes_others() -> None:
     dataset = _dataset(_item("in", 1.0, {10}), _item("out", 0.0, {3}))
     assert [

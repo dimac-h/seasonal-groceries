@@ -9,6 +9,7 @@ export class NowCardEditor extends SeasonalEditor<NowCardConfig> {
     return [
       { name: 'title', selector: { text: {} } },
       { name: 'produce_type', selector: produceTypeSelector(t) },
+      { name: 'hide_unknown', selector: { boolean: {} } },
     ];
   }
 
@@ -16,6 +17,7 @@ export class NowCardEditor extends SeasonalEditor<NowCardConfig> {
     return {
       title: t('editor.title'),
       produce_type: t('editor.produce_type'),
+      hide_unknown: t('editor.hide_unknown'),
     };
   }
 }
