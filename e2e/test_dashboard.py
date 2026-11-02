@@ -74,7 +74,16 @@ def test_recipes_card_shows_ranked_recipes(page: Page) -> None:
     card = page.locator("seasonal-groceries-recipes-card")
 
     expect(card.get_by_text("Pompoensoep")).to_be_visible()
-    expect(card.get_by_text("2 of 2 in season").first).to_be_visible()
+    badge = _recipe(page, "Pompoensoep").locator(".media .score")
+    expect(badge).to_have_text("2 of 2 in season")
+    image = _recipe(page, "Pompoensoep").locator(".media").bounding_box()
+    box = badge.bounding_box()
+    assert image
+    assert box
+    assert box["x"] - image["x"] < image["width"] / 2, "badge sits on the left"
+    assert image["y"] + image["height"] - (box["y"] + box["height"]) < 12, (
+        "at the bottom"
+    )
 
 
 def test_recipes_card_links_to_mealie(page: Page) -> None:
@@ -120,6 +129,7 @@ def test_recipe_without_data_has_no_broken_elements(page: Page) -> None:
     expect(bare.locator(".media ha-svg-icon")).to_have_count(1)
     for selector in ("img", ".tags", ".tag", ".stars", ".favorite", ".description"):
         expect(bare.locator(selector)).to_have_count(0)
+    expect(bare.locator(".media .score")).to_have_text("1 of 1 in season")
     expect(bare.locator(".name")).to_have_text("Preischotel")
 
 
