@@ -75,10 +75,8 @@ export class RecipesCard extends SeasonalCard {
         object-fit: cover;
       }
       .score {
-        position: absolute;
-        inset-inline-start: var(--ha-space-1, 4px);
-        inset-block-end: var(--ha-space-1, 4px);
-        max-width: calc(100% - 2 * var(--ha-space-1, 4px));
+        align-self: flex-start;
+        max-width: 100%;
         padding: 2px var(--ha-space-2, 8px);
         border-radius: var(--ha-border-radius-pill, 12px);
         /* Inverse of the theme's text colour: dark on a light theme, light on a dark one. */
@@ -90,6 +88,14 @@ export class RecipesCard extends SeasonalCard {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+      }
+      /* Wide: the badge sits under the title; narrow: it sits on the image. */
+      .media .score {
+        display: none;
+        position: absolute;
+        inset-inline-start: var(--ha-space-1, 4px);
+        inset-block-end: var(--ha-space-1, 4px);
+        max-width: calc(100% - 2 * var(--ha-space-1, 4px));
       }
       .body {
         flex: 1;
@@ -166,6 +172,12 @@ export class RecipesCard extends SeasonalCard {
           align-self: stretch;
           aspect-ratio: 16 / 9;
         }
+        .media .score {
+          display: block;
+        }
+        .body .score {
+          display: none;
+        }
       }
     `,
   ];
@@ -210,13 +222,17 @@ export class RecipesCard extends SeasonalCard {
     this._brokenImages = new Set([...this._brokenImages, url]);
   }
 
+  private _scoreText(recipe: RecipeRow): string {
+    return this.t('recipes.score', { in_season: recipe.in_season, total: recipe.total });
+  }
+
   private _renderImage(recipe: RecipeRow) {
     const url = recipe.image_url;
     return html`<div class="media">
       ${url && !this._brokenImages.has(url)
         ? html`<img src=${url} alt="" loading="lazy" @error=${() => this._markBroken(url)} />`
         : html`<ha-svg-icon .path=${mdiSilverwareForkKnife}></ha-svg-icon>`}
-      <span class="score">${this.t('recipes.score', { in_season: recipe.in_season, total: recipe.total })}</span>
+      <span class="score">${this._scoreText(recipe)}</span>
     </div>`;
   }
 
@@ -246,6 +262,7 @@ export class RecipesCard extends SeasonalCard {
                   ></ha-svg-icon>`
                 : ''}
             </div>
+            <span class="score">${this._scoreText(recipe)}</span>
             <div class="meta">
               ${this._renderRating(recipe.rating)}
             </div>
