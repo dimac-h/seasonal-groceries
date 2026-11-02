@@ -12,6 +12,7 @@ from homeassistant.exceptions import HomeAssistantError
 
 from .const import DOMAIN
 from .coordinator import ACTIONS
+from .mealie import image_url, recipe_url
 from .season import rows
 
 if TYPE_CHECKING:
@@ -53,6 +54,35 @@ def _mealie_status(coordinator: SeasonalGroceriesCoordinator) -> dict[str, bool]
     return {
         "mealie_configured": coordinator.mealie_configured,
         "mealie_ok": coordinator.last_update_success,
+    }
+
+
+def _recipe_row(
+    coordinator: SeasonalGroceriesCoordinator, scored: Any
+) -> dict[str, Any]:
+    row = {
+        "slug": scored.slug,
+        "name": scored.name,
+        "in_season": scored.in_season,
+        "total": scored.total,
+        "image_url": None,
+        "url": None,
+        "description": "",
+        "tags": [],
+        "favorite": False,
+        "rating": None,
+    }
+    recipe = coordinator.recipe(scored.slug)
+    if recipe is None or coordinator.mealie_url is None:
+        return row
+    return {
+        **row,
+        "image_url": image_url(coordinator.mealie_url, recipe),
+        "url": recipe_url(coordinator.mealie_url, recipe),
+        "description": recipe.description,
+        "tags": list(recipe.tags),
+        "favorite": recipe.favorite,
+        "rating": recipe.rating,
     }
 
 
@@ -134,13 +164,7 @@ async def ws_recipes(
         msg["id"],
         {
             "recipes": [
-                {
-                    "slug": r.slug,
-                    "name": r.name,
-                    "in_season": r.in_season,
-                    "total": r.total,
-                }
-                for r in recipes[: msg.get("limit")]
+                _recipe_row(coordinator, r) for r in recipes[: msg.get("limit")]
             ],
             **_mealie_status(coordinator),
         },

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+from dataclasses import replace
 from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -199,6 +201,64 @@ async def test_recipes_without_mealie_configured(
         "mealie_configured": False,
         "mealie_ok": True,
     }
+
+
+async def test_recipes_include_display_fields(
+    hass: HomeAssistant, ws: MockHAClientWebSocket, client: MagicMock
+) -> None:
+    client.get_recipes = AsyncMock(
+        return_value=[
+            replace(
+                _recipe("soep", _text("pompoen")),
+                id="rid",
+                image="b6ep",
+                description="Romig.\nMet prei.",
+                tags=("soep", "herfst"),
+                rating=3.5,
+                favorite=True,
+                group_slug="home",
+            )
+        ]
+    )
+    mealie = {**MANUAL, "url": "http://m/", "token": "secret-token"}
+    await _setup(hass, mealie=mealie)
+
+    response = await _call(ws, type="seasonal_groceries/recipes")
+
+    assert response["result"]["recipes"] == [
+        {
+            "slug": "soep",
+            "name": "Soep",
+            "in_season": 1,
+            "total": 1,
+            "image_url": "http://m/api/media/recipes/rid/images/original.webp?v=b6ep",
+            "url": "http://m/g/home/r/soep",
+            "description": "Romig.\nMet prei.",
+            "tags": ["soep", "herfst"],
+            "favorite": True,
+            "rating": 3.5,
+        }
+    ]
+    assert "secret-token" not in json.dumps(response)
+
+
+async def test_recipes_with_missing_display_fields(
+    hass: HomeAssistant, ws: MockHAClientWebSocket, client: MagicMock
+) -> None:
+    client.get_recipes = AsyncMock(
+        return_value=[replace(_recipe("soep", _text("pompoen")), group_slug="home")]
+    )
+    await _setup(hass)
+
+    response = await _call(ws, type="seasonal_groceries/recipes")
+
+    row = response["result"]["recipes"][0]
+    assert row["image_url"] is None
+    assert row["description"] == ""
+    assert row["tags"] == []
+    assert row["favorite"] is False
+    assert row["rating"] is None
+    assert row["url"] == "http://m/g/home/r/soep"
 
 
 async def test_recipes_when_mealie_down(
