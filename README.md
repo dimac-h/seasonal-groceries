@@ -48,6 +48,8 @@ Go to **Settings → Devices & Services → Add Integration**, search for *Seaso
 
 There is the option to save corrections as aliases in Mealie so that when you correct a match, the seasonal item's name is also added as an alias to the linked Mealie food.
 
+Your match corrections are stored in Home Assistant's `.storage/seasonal_groceries.corrections` file.
+
 ## Cards
 
 The cards are available in the dashboard card picker. In YAML:
