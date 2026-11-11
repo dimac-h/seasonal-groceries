@@ -97,7 +97,8 @@ export class MatchCard extends SeasonalCard {
       this._actionFailed = true;
     } finally {
       this._pending.delete(key);
-      await this._refresh();
+      // While more actions are in flight the last one refreshes; the server also announces each change.
+      if (this._pending.size === 0) await this._refresh();
     }
   }
 

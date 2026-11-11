@@ -22,6 +22,8 @@ export abstract class SeasonalCard extends LitElement {
 
   private _unsubscribe?: () => void;
   private _starting = false;
+  private _refreshing = false;
+  private _refreshAgain = false;
   private _liveUpdatesUnavailable = false;
 
   /** Fetch whatever the card shows into its own state. Throw on failure. */
@@ -46,12 +48,25 @@ export abstract class SeasonalCard extends LitElement {
     this._unsubscribe = undefined;
   }
 
+  /** Reload now, or once more right after the load in flight, so bursts of events cost one extra load. */
   protected async _refresh(): Promise<void> {
+    if (this._refreshing) {
+      this._refreshAgain = true;
+      return;
+    }
+    this._refreshing = true;
     try {
-      await this.load();
-      this._failed = false;
-    } catch {
-      this._failed = true;
+      do {
+        this._refreshAgain = false;
+        try {
+          await this.load();
+          this._failed = false;
+        } catch {
+          this._failed = true;
+        }
+      } while (this._refreshAgain);
+    } finally {
+      this._refreshing = false;
     }
   }
 
