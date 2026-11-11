@@ -2350,9 +2350,6 @@ wheels = [
 name = "seasonal-groceries-integration"
 version = "0.1.0"
 source = { virtual = "." }
-dependencies = [
-    { name = "pytest" },
-]
 
 [package.dev-dependencies]
 dev = [
@@ -2364,7 +2361,6 @@ e2e = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "pytest", specifier = ">=9.0.3" }]
 
 [package.metadata.requires-dev]
 dev = [

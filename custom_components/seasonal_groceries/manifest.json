@@ -1,6 +1,7 @@
 {
   "domain": "seasonal_groceries",
   "name": "Seasonal Groceries",
+  "categories": ["productivity_information.shopping_groceries"],
   "codeowners": ["@dimac-h"],
   "config_flow": true,
   "dependencies": ["frontend", "http"],
