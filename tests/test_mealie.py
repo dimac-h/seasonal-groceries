@@ -12,7 +12,7 @@ import pytest
 from aiohttp import ClientError
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from pytest_homeassistant_custom_component.common import (
+from pytest_homeassistant.common import (
     MockConfigEntry,
     MockModule,
     mock_integration,
@@ -32,7 +32,7 @@ from custom_components.seasonal_groceries.mealie import (
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
-    from pytest_homeassistant_custom_component.test_util.aiohttp import (
+    from pytest_homeassistant.test_util.aiohttp import (
         AiohttpClientMocker,
     )
 

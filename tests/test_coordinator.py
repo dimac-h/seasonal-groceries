@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from pytest_homeassistant_custom_component.common import (
+from pytest_homeassistant.common import (
     MockConfigEntry,
     async_fire_time_changed,
 )
@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from homeassistant.core import HomeAssistant
-    from pytest_homeassistant_custom_component.plugins import FrozenDateTimeFactory
+    from pytest_homeassistant.plugins import FrozenDateTimeFactory
 
 _PATCHERS: list[Any] = []
 MANUAL = {"mode": "manual", "url": "http://m", "token": "t", "verify_ssl": True}

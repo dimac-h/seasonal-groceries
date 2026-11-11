@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.setup import async_setup_component
-from pytest_homeassistant_custom_component.common import (
+from pytest_homeassistant.common import (
     MockConfigEntry,
 )
 
@@ -27,8 +27,8 @@ if TYPE_CHECKING:
     from collections.abc import AsyncIterator
 
     from homeassistant.core import HomeAssistant
-    from pytest_homeassistant_custom_component.plugins import FrozenDateTimeFactory
-    from pytest_homeassistant_custom_component.typing import (
+    from pytest_homeassistant.plugins import FrozenDateTimeFactory
+    from pytest_homeassistant.typing import (
         ClientSessionGenerator,
         MockHAClientWebSocket,
         WebSocketGenerator,

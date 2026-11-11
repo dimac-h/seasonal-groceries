@@ -9,7 +9,7 @@ from aiohttp import ClientError
 from homeassistant import config_entries
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.data_entry_flow import FlowResultType
-from pytest_homeassistant_custom_component.common import (
+from pytest_homeassistant.common import (
     MockConfigEntry,
     MockModule,
     mock_integration,
@@ -20,7 +20,7 @@ from custom_components.seasonal_groceries.const import DOMAIN, Language
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
-    from pytest_homeassistant_custom_component.test_util.aiohttp import (
+    from pytest_homeassistant.test_util.aiohttp import (
         AiohttpClientMocker,
     )
 
