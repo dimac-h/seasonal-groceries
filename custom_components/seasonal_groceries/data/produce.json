@@ -403,6 +403,33 @@
    }
   },
   {
+   "key": "lente-ui",
+   "type": "vegetable",
+   "names": {
+    "en": "spring onion",
+    "nl": "lente-ui"
+   },
+   "aliases": {
+    "en": [
+     "scallion",
+     "green onion"
+    ],
+    "nl": [
+     "bosui",
+     "lenteui"
+    ]
+   },
+   "months": [
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "residues": null
+  },
+  {
    "key": "mais",
    "type": "vegetable",
    "names": {
@@ -1146,6 +1173,23 @@
     12
    ],
    "residues": 3.4
+  },
+  {
+   "key": "avocado",
+   "type": "fruit",
+   "names": {
+    "en": "avocado",
+    "nl": "avocado"
+   },
+   "months": [
+    11,
+    12,
+    1,
+    2,
+    3,
+    4
+   ],
+   "residues": null
   },
   {
    "key": "blauwe-bes",
