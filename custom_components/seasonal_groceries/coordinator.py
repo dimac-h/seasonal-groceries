@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from dataclasses import dataclass, field, replace
 from datetime import timedelta
+from functools import partial
 from typing import TYPE_CHECKING, Any
 
 from homeassistant.core import callback
@@ -84,6 +86,8 @@ class SeasonalGroceriesCoordinator(DataUpdateCoordinator[CoordinatorData]):
         self._unsub_month: Callable[[], None] | None = None
         self._ingredients: dict[str, MealieIngredient] = {}
         self._resolved: dict[str, Resolved] = {}
+        self._resolve_lock = asyncio.Lock()
+        self._waiting_resolves = 0
 
     @property
     def settings(self) -> dict[str, Any]:
@@ -175,6 +179,13 @@ class SeasonalGroceriesCoordinator(DataUpdateCoordinator[CoordinatorData]):
         self.data = self._build(mealie_configured=self.mealie_configured)
         self.async_update_listeners()
 
+    async def _async_rebuild(self) -> None:
+        """Rebuild the ranking in an executor thread, so HA's event loop stays free."""
+        self.data = await self.hass.async_add_executor_job(
+            partial(self._build, mealie_configured=self.mealie_configured)
+        )
+        self.async_update_listeners()
+
     def _build(self, *, mealie_configured: bool) -> CoordinatorData:
         dataset, month = self.dataset, self.month
         corrections = self.corrections.all()
@@ -249,7 +260,29 @@ class SeasonalGroceriesCoordinator(DataUpdateCoordinator[CoordinatorData]):
     async def async_resolve_entry(
         self, key: str, action: str, item_key: str | None = None
     ) -> None:
-        """Apply a review action to one ingredient (all recipes follow)."""
+        """
+        Apply a review action to one ingredient (all recipes follow).
+
+        Actions run one at a time. Rebuilding the ranking is the expensive part, so
+        when more actions are already waiting, the last of them does it for all.
+        """
+        self._waiting_resolves += 1
+        waiting = True
+        try:
+            async with self._resolve_lock:
+                waiting = False
+                self._waiting_resolves -= 1
+                try:
+                    await self._apply_resolve(key, action, item_key)
+                finally:
+                    # Also after a failure: earlier actions in the batch still count.
+                    if self._waiting_resolves == 0:
+                        await self._async_rebuild()
+        finally:
+            if waiting:  # cancelled before getting its turn
+                self._waiting_resolves -= 1
+
+    async def _apply_resolve(self, key: str, action: str, item_key: str | None) -> None:
         ingredient = self._ingredients.get(key)
         if ingredient is None:
             msg = f"unknown ingredient {key}"
@@ -294,7 +327,6 @@ class SeasonalGroceriesCoordinator(DataUpdateCoordinator[CoordinatorData]):
 
         if chosen is not None:
             await self._write_back_alias(ingredient, chosen)
-        self.async_recompute()
 
     async def _write_back_alias(
         self, ingredient: MealieIngredient, item_key: str

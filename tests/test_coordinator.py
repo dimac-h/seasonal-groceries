@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import threading
 from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -273,3 +274,43 @@ async def test_auth_failure_starts_reauth(hass: HomeAssistant) -> None:
 
     assert coordinator.last_update_success is False
     assert list(coordinator.config_entry.async_get_active_flows(hass, {"reauth"}))
+
+
+async def test_review_actions_rebuild_off_the_event_loop(hass: HomeAssistant) -> None:
+    coordinator, _ = await _coordinator(hass)
+    await coordinator.async_refresh()
+    loop_thread = threading.current_thread()
+    threads: list[threading.Thread] = []
+    real = coordinator._build  # noqa: SLF001
+
+    def recording(**kwargs: Any) -> Any:
+        threads.append(threading.current_thread())
+        return real(**kwargs)
+
+    with patch.object(coordinator, "_build", recording):
+        await coordinator.async_resolve_entry("text:zout", "ignore")
+
+    assert threads
+    assert all(thread is not loop_thread for thread in threads)
+
+
+async def test_a_burst_of_review_actions_rebuilds_once(hass: HomeAssistant) -> None:
+    coordinator, corrections = await _coordinator(hass)
+    await coordinator.async_refresh()
+    notified: list[None] = []
+    coordinator.async_add_listener(lambda: notified.append(None))
+    keys = ["text:zout", "text:olijfolie", "text:kiwibes"]
+    real_set = corrections.set
+
+    async def slow_set(key: str, correction: Correction) -> None:
+        await asyncio.sleep(0.01)  # a real save yields, so the other actions queue up
+        await real_set(key, correction)
+
+    corrections.set = slow_set  # type: ignore[method-assign]
+
+    await asyncio.gather(
+        *(coordinator.async_resolve_entry(key, "ignore") for key in keys)
+    )
+
+    assert all(corrections.get(key) is not None for key in keys)
+    assert len(notified) == 1
